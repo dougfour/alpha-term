@@ -85,7 +85,7 @@ export async function checkForUpdates(
       return { hasUpdate: false };
     }
     
-    const data: ReleaseInfo = await response.json();
+    const data = await response.json() as ReleaseInfo;
     const latestVersion = data.tag_name.replace("v", "");
     
     // Update cache
@@ -136,7 +136,7 @@ export async function performUpdate(): Promise<{ success: boolean; message: stri
       return { success: false, message: "Failed to fetch release information." };
     }
     
-    const data: ReleaseInfo = await response.json();
+    const data = await response.json() as ReleaseInfo;
     const latestVersion = data.tag_name.replace("v", "");
     
     // Detect platform
