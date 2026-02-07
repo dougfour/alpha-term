@@ -28,24 +28,33 @@ const showWelcome = () => {
 🚀 GETTING STARTED:
 
    1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Get your API key from your dashboard
+   2. Get your API key from https://neonalpha.me/dashboard
    3. Run: alpha-term login YOUR_API_KEY
    4. Run: alpha-term add @elonmusk
    5. Run: alpha-term watch
 
-📖 QUICK REFERENCE:
+⚠️  NOT LOGGED IN
 
-   alpha-term login [apiKey]    Login with your API key
-   alpha-term add @handle       Add a Twitter account to monitor
-   alpha-term list              List monitored accounts
-   alpha-term watch             Start live monitoring (default)
-   alpha-term test              Try demo mode first
+   To use alpha-term, you need to subscribe first.
 
-🔗 LINKS:
+   Subscribe: https://neonalpha.me/pricing
+   Get API Key: https://neonalpha.me/dashboard/settings/api-keys
+   Docs: https://neonalpha.me/docs
 
-   Website: https://neonalpha.me
-   Docs:    https://neonalpha.me/docs
-   Support: https://neonalpha.me/discord
+`);
+};
+
+// Show login prompt when not logged in
+const showLoginPrompt = () => {
+  console.log(`
+⚠️  NOT LOGGED IN
+
+   You need to login with your API key first.
+
+   1. Subscribe at https://neonalpha.me (Pro or Elite)
+   2. Get your API key from:
+      https://neonalpha.me/dashboard/settings/api-keys
+   3. Run: alpha-term login YOUR_API_KEY
 
 `);
 };
@@ -76,6 +85,15 @@ runVersionCheck();
 // Show welcome for new users when running without args
 if (process.argv.length <= 2 && !isLoggedIn()) {
   showWelcome();
+  process.exit(0);
+}
+
+// Show login prompt for any command if not logged in
+const command = process.argv[2] || "";
+const loginCommands = ["login", "test"];
+if (!isLoggedIn() && !loginCommands.includes(command)) {
+  showLoginPrompt();
+  process.exit(0);
 }
 
 import { watchCommand } from "./commands/watch.js";
