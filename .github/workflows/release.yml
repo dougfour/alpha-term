@@ -19,16 +19,12 @@ jobs:
         include:
           - os: macos-latest
             asset_prefix: macos-arm64
-            runner_os: macos
           - os: macos-latest
             asset_prefix: macos-x64
-            runner_os: macos
           - os: ubuntu-latest
             asset_prefix: linux-x64
-            runner_os: linux
           - os: windows-latest
             asset_prefix: windows-x64
-            runner_os: windows
     
     steps:
       - name: Checkout code
@@ -46,12 +42,15 @@ jobs:
         run: |
           VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0" | sed 's/v//')
           ALPHA_TERM_VERSION=$VERSION bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
-          if [ "${{ matrix.runner_os }}" = "windows" ]; then
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
       
-      - name: Upload binary
+      - name: Create release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            alpha-term-${{ matrix.asset_prefix }}
+            alpha-term-${{ matrix.asset_prefix }}.exe
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload ${{ github.ref_name }} ./alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }} --repo ${{ github.repository }} --clobber
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
