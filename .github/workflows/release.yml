@@ -42,8 +42,9 @@ jobs:
         run: |
           VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0" | sed 's/v//')
           
-          # Replace VERSION placeholder in source
-          sed -i "s/{{VERSION}}/$VERSION/" src/cli.ts
+          # Replace VERSION placeholder in source (escape slashes for sed)
+          SAFE_VERSION=$(echo "$VERSION" | sed 's/\//\\\//g')
+          sed -i "s/{{VERSION}}/$SAFE_VERSION/" src/cli.ts
           
           bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
