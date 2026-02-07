@@ -2,23 +2,10 @@
 
 import { Command } from "commander";
 import { existsSync, readFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Get version from version.json (injected at build time)
-let VERSION = "1.0.0";
-try {
-  const versionFile = join(__dirname, "version.json");
-  if (existsSync(versionFile)) {
-    const versionData = JSON.parse(readFileSync(versionFile, "utf-8"));
-    VERSION = versionData.version || "1.0.0";
-  }
-} catch {
-  VERSION = "1.0.0";
-}
+// Version - replaced at build time
+const VERSION = "{{VERSION}}";
 
 // Check if user is logged in
 const isLoggedIn = () => {
