@@ -2,20 +2,13 @@
 
 import { Command } from "commander";
 import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Read version from package.json
-const packageJson = JSON.parse(
-  readFileSync(join(__dirname, "..", "package.json"), "utf-8")
-);
-const version = packageJson.version;
+// Get version from environment variable (set at build time) or fallback
+const VERSION = process.env.ALPHA_TERM_VERSION || "1.0.0";
 
 // Version check
-import { checkForUpdates, CURRENT_VERSION } from "./lib/updater.js";
+import { checkForUpdates } from "./lib/updater.js";
 
 // Check for updates on startup (non-blocking)
 const runVersionCheck = async () => {
@@ -51,7 +44,7 @@ const program = new Command();
 program
   .name("alpha-term")
   .description("Professional CLI for NeonAlpha terminal alerts")
-  .version(version);
+  .version(VERSION);
 
 // Main watch command (default)
 program

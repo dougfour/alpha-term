@@ -40,7 +40,8 @@ jobs:
       
       - name: Build binary
         run: |
-          bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0" | sed 's/v//')
+          ALPHA_TERM_VERSION=$VERSION bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
