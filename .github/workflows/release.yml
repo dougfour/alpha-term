@@ -17,8 +17,9 @@ jobs:
         include:
           - os: macos-latest
             asset_prefix: macos-arm64
-          - os: macos-13
+          - os: macos-latest
             asset_prefix: macos-x64
+            bun_target: bun-darwin-x64
           - os: ubuntu-latest
             asset_prefix: linux-x64
           - os: windows-latest
@@ -43,12 +44,12 @@ jobs:
 
           perl -i -pe "s/\{\{VERSION\}\}/$VERSION/g" src/cli.ts
 
-          bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
-        shell: bash
+          TARGET_FLAG=""
+          if [ -n "${{ matrix.bun_target }}" ]; then
+            TARGET_FLAG="--target ${{ matrix.bun_target }}"
+          fi
 
-      - name: Rename Windows binary
-        if: matrix.os == 'windows-latest'
-        run: mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
+          bun build ./src/cli.ts --compile $TARGET_FLAG --outfile alpha-term-${{ matrix.asset_prefix }}
         shell: bash
 
       - name: Upload build artifact
