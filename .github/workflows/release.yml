@@ -51,5 +51,7 @@ jobs:
           fi
       
       - name: Upload binary
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload ${{ github.ref_name }} ./alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }} --repo ${{ github.repository }} --clobber
