@@ -326,9 +326,9 @@ Build a standalone CLI binary (no Node.js/npm required) that:
    - Used `perl -i -pe` for cross-platform compatibility (sed fails on macOS)
 
 3. **GitHub Actions CI pipeline**
-   - Matrix builds for 4 platforms (macOS arm64, macOS x64, Linux x64, Windows x64)
-   - Uses `softprops/action-gh-release@v2` for releases + uploads
-   - Single job per platform, uploads as they complete
+   - Two-job design: `build` (matrix across 4 platforms) → `release` (single job)
+   - Build jobs upload artifacts, release job creates GitHub Release with all assets
+   - Eliminates race conditions from multiple jobs finalizing the same release
 
 4. **Welcome/onboarding message**
    - Shows when running `alpha-term` with no args AND not logged in
@@ -336,51 +336,36 @@ Build a standalone CLI binary (no Node.js/npm required) that:
 
 5. **curl installer**
    - URL: https://neonalpha.me/install
-   - Detects OS/arch, downloads appropriate binary
-   - Installs to `/usr/local/bin`
-   - Handles sudo for system-wide install
+   - Detects OS/arch, downloads appropriate binary from GitHub Releases
+   - Installs to `~/.local/bin` (no sudo needed)
 
-### Troubles We're Having
+### Troubles We Had (resolved)
 
-1. **CI Matrix Upload Race Conditions**
-   - Multiple jobs upload to same release simultaneously
-   - "already_exists" error when second job tries to create release
-   - "finalizing" failures when multiple uploads compete
-   - v1.0.20-v1.0.24 only uploaded 1-2 binaries instead of all 4
-   - **Root cause:** Each matrix job calls `softprops/action-gh-release` independently
+1. **CI Matrix Upload Race Conditions** (FIXED in v1.0.26)
+   - Multiple jobs tried to create/finalize the same release simultaneously
+   - Every CI run from v1.0.17-v1.0.25 showed `completed failure`
+   - **Fix:** Split into two jobs — `build` (matrix, uploads artifacts) → `release` (single job, creates release with all assets)
 
-2. **Version Injection Failures**
-   - macOS sed has BSD syntax (requires `-i ''` argument)
-   - Periods in version string confused sed pattern matching
-   - Tried: `sed -i "s/{{VERSION}}/$VERSION/"` → failed
-   - Tried: `sed -i '' "s/{{VERSION}}/$VERSION/"` → works on macOS, fails on Linux
-   - **Solution:** `perl -i -pe "s/{{VERSION}}/$VERSION/g"` works everywhere
+2. **Version Injection Failures** (FIXED in v1.0.26)
+   - `git describe --tags` failed in CI due to shallow clone with `--no-tags`
+   - Shell operator precedence bug: `sed` only applied to fallback, not to `git describe` output
+   - **Fix:** Use `GITHUB_REF_NAME` env var (set by GitHub Actions) instead of `git describe`
+   - Version injection: `VERSION="${GITHUB_REF_NAME#v}"` — simple, reliable, no git needed
 
-3. **Tag Already Exists Errors**
-   - Accidentally pushed v1.0.25 tag twice (test push + actual push)
-   - Second push failed with "Validation Failed: already_exists"
-   - Binary uploaded was from first push (stale code)
-   - **Fix:** Delete and recreate tag: `git tag -d v1.0.25 && git push origin :refs/tags/v1.0.25 && git tag v1.0.25 && git push origin v1.0.25`
+3. **macOS x64 built as arm64** (FIXED in v1.0.26)
+   - Both macOS builds used `macos-latest` which is arm64
+   - **Fix:** Use `macos-13` (Intel) for x64 builds
 
-4. **--version Showing Wrong Value**
-   - Binary showing `1.0.0` instead of actual version
-   - Caused by tag conflict (uploaded stale binary)
-   - Fresh tag pushed after fixing tag conflict
-
-5. **--version/--help Requiring Login**
-   - `alpha-term --version` showed login prompt instead of version
-   - `isLoggedIn()` check was blocking core CLI flags
+4. **--version/--help Requiring Login** (FIXED in v1.0.25)
    - **Fix:** Added `--version`, `-V`, `--help`, `-h`, `--test` to no-auth commands list
 
-### Current Status (v1.0.25)
+### Current Status
 
-- ✅ macOS arm64 binary builds and uploads
-- ✅ Version displays correctly (1.0.25)
+- ✅ CI pipeline: build (matrix) → release (single job), no race conditions
+- ✅ Version injection via `GITHUB_REF_NAME` (no git describe needed)
+- ✅ All 4 platforms build on correct architectures
 - ✅ Welcome message triggers for new users
 - ✅ `--version` and `--help` work without login
-- ⚠️ Windows upload still fails (race condition)
-- ⚠️ macOS x64 upload sometimes fails
-- ⚠️ Linux upload works but upload_url conflicts
 
 ### Files of Interest
 

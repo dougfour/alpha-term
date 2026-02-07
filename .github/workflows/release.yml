@@ -7,55 +7,74 @@ on:
 
 permissions:
   contents: write
-  attestations: write
-  id-token: write
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         include:
           - os: macos-latest
             asset_prefix: macos-arm64
-          - os: macos-latest
+          - os: macos-13
             asset_prefix: macos-x64
           - os: ubuntu-latest
             asset_prefix: linux-x64
           - os: windows-latest
             asset_prefix: windows-x64
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies
         run: bun install
-      
-      - name: Build binary
+
+      - name: Inject version and build binary
         run: |
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0" | sed 's/v//')
-          
-          # Replace VERSION placeholder using perl (works on all platforms)
-          perl -i -pe "s/{{VERSION}}/$VERSION/g" src/cli.ts
-          
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Building version: $VERSION"
+
+          perl -i -pe "s/\{\{VERSION\}\}/$VERSION/g" src/cli.ts
+
           bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
-          fi
-      
-      - name: Release and upload asset
+        shell: bash
+
+      - name: Rename Windows binary
+        if: matrix.os == 'windows-latest'
+        run: mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
+        shell: bash
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-term-${{ matrix.asset_prefix }}
+          path: alpha-term-${{ matrix.asset_prefix }}*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Create release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            alpha-term-${{ matrix.asset_prefix }}
-            alpha-term-${{ matrix.asset_prefix }}.exe
+          files: artifacts/*
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
