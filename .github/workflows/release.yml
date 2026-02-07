@@ -42,8 +42,8 @@ jobs:
         run: |
           VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "1.0.0" | sed 's/v//')
           
-          # Replace VERSION placeholder in source (use pipe delimiter for sed)
-          sed -i "s|{{VERSION}}|$VERSION|g" src/cli.ts
+          # Replace VERSION placeholder using perl (works on all platforms)
+          perl -i -pe "s/{{VERSION}}/$VERSION/g" src/cli.ts
           
           bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
