@@ -1,21 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Get version from environment variable (set at build time) or fallback
+export const CURRENT_VERSION = process.env.ALPHA_TERM_VERSION || "1.0.0";
 
 // Configuration
 const REPO = "dougfour/alpha-term";
 const GITHUB_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const CACHE_DIR = path.join(process.env.HOME || "", ".alpha-term");
 const CACHE_FILE = path.join(CACHE_DIR, "update-check.json");
-
-// Read version from package.json
-const packageJson = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf-8")
-);
-export const CURRENT_VERSION = packageJson.version;
 
 interface ReleaseInfo {
   tag_name: string;
