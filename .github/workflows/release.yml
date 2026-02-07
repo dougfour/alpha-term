@@ -50,15 +50,6 @@ jobs:
             mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
       
-      - name: Upload binary to release
+      - name: Upload binary
         run: |
-          # Get release ID from tag
-          RELEASE_ID=$(curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" \
-            | grep '"id"' | head -1 | grep -o '[0-9]*')
-          
-          # Upload asset
-          curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary "@alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}"
+          gh release upload ${{ github.ref_name }} ./alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }} --repo ${{ github.repository }} --clobber
