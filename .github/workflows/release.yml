@@ -35,11 +35,11 @@ jobs:
         with:
           node-version: "18"
       
-      - name: Build TypeScript
-        run: npm run build
-      
       - name: Install dependencies
         run: npm install
+      
+      - name: Build TypeScript
+        run: npm run build
       
       - name: Build with pkg
         run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }}
