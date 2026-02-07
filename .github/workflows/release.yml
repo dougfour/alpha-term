@@ -46,11 +46,11 @@ jobs:
             mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
       
-      - name: Create release and upload asset
+      - name: Release and upload asset
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            alpha-term-${{ matrix.asset_prefix }}
-            alpha-term-${{ matrix.asset_prefix }}.exe
+            alpha-term-${{ matrix.asset_prefix }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
