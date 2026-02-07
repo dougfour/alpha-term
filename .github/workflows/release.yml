@@ -17,9 +17,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest
             asset_prefix: macos-arm64
-          - os: macos-12
+          - os: macos-latest
             asset_prefix: macos-x64
           - os: ubuntu-latest
             asset_prefix: linux-x64
@@ -30,26 +30,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: "18"
+          bun-version: latest
       
       - name: Install dependencies
-        run: npm install
+        run: bun install
       
-      - name: Build TypeScript
-        run: npm run build
-      
-      - name: Build with pkg
-        run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }} --no-bytecode
-      
-      - name: Create release asset
+      - name: Build binary
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            mv bin/${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
-          else
-            mv bin/${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}
+          bun build ./src/cli.ts --compile --outfile alpha-term-${{ matrix.asset_prefix }}
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
       
       - name: Upload release asset
