@@ -31,7 +31,7 @@ jobs:
           node-version: "18"
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Build with pkg
         run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }}
