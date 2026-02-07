@@ -90,8 +90,8 @@ if (process.argv.length <= 2 && !isLoggedIn()) {
 
 // Show login prompt for any command if not logged in
 const command = process.argv[2] || "";
-const loginCommands = ["login", "test"];
-if (!isLoggedIn() && !loginCommands.includes(command)) {
+const noAuthCommands = ["--version", "-V", "--help", "-h", "--test"];
+if (!isLoggedIn() && !noAuthCommands.includes(command)) {
   showLoginPrompt();
   process.exit(0);
 }
