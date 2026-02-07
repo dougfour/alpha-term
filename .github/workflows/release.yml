@@ -50,20 +50,15 @@ jobs:
             mv alpha-term-${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
           fi
       
-      - name: Get release upload URL
-        id: get_release
+      - name: Upload binary to release
         run: |
-          RELEASE_URL=$(curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          # Get release ID from tag
+          RELEASE_ID=$(curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" \
-            | grep '"upload_url"' | cut -d'"' -f4 | sed 's/{?name,label}//')
-          echo "upload_url=${RELEASE_URL}" >> $GITHUB_OUTPUT
-      
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}
-          asset_name: alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}
-          asset_content_type: application/octet-stream
+            | grep '"id"' | head -1 | grep -o '[0-9]*')
+          
+          # Upload asset
+          curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary "@alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${RELEASE_ID}/assets?name=alpha-term-${{ matrix.asset_prefix }}${{ matrix.runner_os == 'windows' && '.exe' || '' }}"
