@@ -1,11 +1,54 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { readFileSync } from "fs";
-import { dirname, join } from "path";
+import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 
 // Get version from environment variable (set at build time) or fallback
 const VERSION = process.env.ALPHA_TERM_VERSION || "1.0.0";
+
+// Check if user is logged in
+const isLoggedIn = () => {
+  const configDir = join(process.env.HOME || "", ".config", "alpha-term");
+  const configFile = join(configDir, "config.json");
+  return existsSync(configFile);
+};
+
+// Show welcome message for new users
+const showWelcome = () => {
+  console.log(`
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║   <<< WELCOME TO ALPHA-TERM >>>                                  ║
+║                                                                   ║
+║   Terminal alerts for NeonAlpha - Monitor tweets in real-time     ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+🚀 GETTING STARTED:
+
+   1. Subscribe at https://neonalpha.me (Pro or Elite)
+   2. Get your API key from your dashboard
+   3. Run: alpha-term login YOUR_API_KEY
+   4. Run: alpha-term add @elonmusk
+   5. Run: alpha-term watch
+
+📖 QUICK REFERENCE:
+
+   alpha-term login [apiKey]    Login with your API key
+   alpha-term add @handle       Add a Twitter account to monitor
+   alpha-term list              List monitored accounts
+   alpha-term watch             Start live monitoring (default)
+   alpha-term test              Try demo mode first
+
+🔗 LINKS:
+
+   Website: https://neonalpha.me
+   Docs:    https://neonalpha.me/docs
+   Support: https://neonalpha.me/discord
+
+`);
+};
 
 // Version check
 import { checkForUpdates } from "./lib/updater.js";
@@ -29,6 +72,11 @@ const runVersionCheck = async () => {
 
 // Run version check in background
 runVersionCheck();
+
+// Show welcome for new users when running without args
+if (process.argv.length <= 2 && !isLoggedIn()) {
+  showWelcome();
+}
 
 import { watchCommand } from "./commands/watch.js";
 import { loginCommand } from "./commands/login.js";

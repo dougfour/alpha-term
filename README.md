@@ -1,6 +1,6 @@
 # Alpha-Term
 
-Professional CLI for NeonAlpha terminal alerts.
+Professional CLI for NeonAlpha terminal alerts - Monitor Twitter/X accounts in real-time from your terminal.
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
@@ -17,60 +17,71 @@ Professional CLI for NeonAlpha terminal alerts.
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
 
-## Install
-
-### One-Line Install (Recommended)
+## 🚀 Quick Install
 
 ```bash
 curl -sL https://neonalpha.me/install | bash
 ```
 
-This downloads the latest binary for your platform and installs it to `~/.local/bin`.
+**That's it!** Binary installs automatically. Run `alpha-term` to start.
 
-### npm (Alternative)
+---
+
+## 📖 Getting Started
+
+### Step 1: Subscribe
+
+Get Pro or Elite at https://neonalpha.me
+
+### Step 2: Get API Key
+
+https://neonalpha.me/dashboard/settings/api-keys
+
+### Step 3: Login
 
 ```bash
-npm install -g alpha-term
+alpha-term login YOUR_API_KEY
 ```
 
-## Requirements
-
-- **macOS** (Intel or Apple Silicon)
-- **Linux** (x64)
-- **Windows** (x64)
-- **NeonAlpha Subscription** - Pro or Elite required for full features
-
-## Quick Start
+### Step 4: Add Accounts
 
 ```bash
-# Login with your NeonAlpha API key
-alpha-term login YOUR_API_KEY
-
-# Add a Twitter account to monitor
 alpha-term add @elonmusk
+alpha-term add @jack --keyword bitcoin
+```
 
-# Start monitoring
+### Step 5: Start Monitoring
+
+```bash
 alpha-term watch
 ```
 
-## Commands
+---
 
-### `alpha-term watch` (Default)
+## 💻 Commands
+
+### `alpha-term` (Default)
+
+Run without arguments to see help:
+
+```bash
+alpha-term
+```
+
+Shows welcome message and available commands.
+
+---
+
+### `alpha-term watch`
 
 Monitor tweets in real-time.
 
 ```bash
-# Monitor all accounts
+# Basic usage
 alpha-term watch
-
-# Specific account only
-alpha-term @elonmusk
 
 # With sound alerts
 alpha-term watch --sound
-
-# Auto-save tweets to file
-alpha-term watch --save tweets.json
 
 # Filter by keyword
 alpha-term watch --keyword bitcoin
@@ -78,23 +89,26 @@ alpha-term watch --keyword bitcoin
 # Filter by handle
 alpha-term watch --handle @elonmusk
 
+# Save tweets to file
+alpha-term watch --save tweets.jsonl
+
 # JSON output (for scripting)
 alpha-term watch --json
 
-# Test mode (demo tweet)
+# Try demo mode first
 alpha-term watch --test
 ```
 
-**Flags:**
+**Options:**
 
 | Flag | Description |
 |------|-------------|
 | `-s, --sound` | Play sound on new tweets |
-| `--save <file>` | Save tweets to file (JSONL format) |
-| `-k, --keyword` | Filter by keyword in tweet text |
-| `-h, --handle` | Filter by specific Twitter handle |
-| `-j, --json` | Output as JSON instead of formatted text |
-| `-t, --test` | Test mode with simulated tweet |
+| `--save <file>` | Save tweets to JSONL file |
+| `-k, --keyword` | Filter by keyword in tweet |
+| `-h, --handle` | Filter by specific handle |
+| `-j, --json` | Output as JSON |
+| `-t, --test` | Demo mode |
 
 ---
 
@@ -103,40 +117,14 @@ alpha-term watch --test
 Login with your NeonAlpha API key.
 
 ```bash
-# Interactive login (prompts for API key)
+# Interactive (prompts for key)
 alpha-term login
 
-# With API key as argument
+# With key as argument
 alpha-term login YOUR_API_KEY
 ```
 
-**Get your API key:** https://neonalpha.me/dashboard/settings/api-keys
-
----
-
-### `alpha-term list`
-
-List all your monitored accounts.
-
-```bash
-alpha-term list
-```
-
-**Output:**
-
-```
-📋 Your Monitors
-
-  Handle              Keyword
-  ──────────────────  ──────────────────
-  @elonmusk          bitcoin
-
-  Total: 1 monitor(s)
-
-Options:
-  Sound alerts: disabled
-  Poll interval: 30s
-```
+Get your API key: https://neonalpha.me/dashboard/settings/api-keys
 
 ---
 
@@ -150,6 +138,16 @@ alpha-term add @elonmusk
 
 # Add with keyword filter
 alpha-term add @elonmusk --keyword bitcoin
+```
+
+---
+
+### `alpha-term list`
+
+List your monitored accounts.
+
+```bash
+alpha-term list
 ```
 
 ---
@@ -169,17 +167,17 @@ alpha-term remove @elonmusk
 Configure alpha-term settings.
 
 ```bash
-# Enable sound alerts
+# View current config
+alpha-term config
+
+# Enable sound
 alpha-term config --set sound true
 
 # Set poll interval (seconds)
-alpha-term config --set poll 10
+alpha-term config --set poll 30
 
 # Set auto-save file
-alpha-term config --set save tweets.json
-
-# View current config
-alpha-term config
+alpha-term config --set save tweets.jsonl
 
 # Reset to defaults
 alpha-term config --reset
@@ -189,7 +187,7 @@ alpha-term config --reset
 
 ### `alpha-term test`
 
-Run in test mode with a simulated tweet.
+Run in demo mode with a simulated tweet.
 
 ```bash
 alpha-term test
@@ -209,7 +207,7 @@ alpha-term update
 
 ### `alpha-term check`
 
-Check for available updates without installing.
+Check for updates without installing.
 
 ```bash
 alpha-term check
@@ -217,96 +215,89 @@ alpha-term check
 
 ---
 
-## Installation Directory
+## 🔧 Installation Details
 
-The CLI stores data in:
+- **Install location:** `/usr/local/bin` (in PATH by default)
+- **Config:** `~/.config/alpha-term/config.json`
+- **Token:** `~/.config/alpha-term/token`
+- **Cache:** `~/.cache/alpha-term/`
 
-- **Config:** `~/.alpha-term/config.json`
-- **Token:** `~/.alpha-term/token`
-- **Cache:** `~/.alpha-term/`
+---
 
-## Environment Variables
+## 🖥️ Supported Platforms
 
-| Variable | Description |
-|----------|-------------|
-| `NO_UPDATE_CHECK=1` | Disable update checks on startup |
-| `ALPHA_TERM_API_URL` | Override API URL (for development) |
+| Platform | Architecture | Status |
+|----------|--------------|--------|
+| macOS | Apple Silicon (arm64) | ✅ |
+| macOS | Intel (x64) | ✅ |
+| Linux | x64 | ✅ |
+| Windows | x64 | ⚠️ WSL recommended |
 
-## Troubleshooting
+---
 
-### "Command not found" after install
+## 🔧 Troubleshooting
 
-Add to your PATH:
+### "Command not found"
+
+Restart your terminal, or run:
 
 ```bash
-# For bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-
-# For zsh
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+source ~/.zshrc  # or ~/.bashrc
 ```
 
 ### Login fails
 
-- Verify your API key at https://neonalpha.me/dashboard/settings/api-keys
-- Ensure your subscription is Pro or Elite (Free tier doesn't include CLI access)
+1. Verify API key at https://neonalpha.me/dashboard/settings/api-keys
+2. Ensure you have Pro or Elite subscription
+3. Free tier doesn't include CLI access
 
 ### No alerts appearing
 
-- Run `alpha-term list` to verify monitors are configured
-- Check your Telegram for alerts (if using web dashboard)
-- Try `alpha-term test` to verify CLI is working
+```bash
+# Verify monitors are configured
+alpha-term list
 
-## For Developers
+# Try demo mode
+alpha-term test
 
-### Building from Source
+# Check config
+alpha-term config
+```
+
+---
+
+## 🔧 Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `NO_UPDATE_CHECK=1` | Disable update checks |
+| `ALPHA_TERM_API_URL` | Override API URL (dev only) |
+
+---
+
+## 📦 Alternative Install
+
+### npm
 
 ```bash
-# Clone the repo
+npm install -g alpha-term
+```
+
+### Build from Source
+
+```bash
 git clone https://github.com/dougfour/alpha-term.git
 cd alpha-term
-
-# Install dependencies
 npm install
-
-# Build TypeScript
-npm run build
-
-# Run locally
 npm run dev watch --test
 ```
 
-### Building Binaries
+---
 
-```bash
-# Build all platforms
-npm run build:binaries
-
-# Individual platforms
-pkg . --targets node18-macos-arm64 --output bin/alpha-term-macos-arm64
-pkg . --targets node18-macos-x64 --output bin/alpha-term-macos-x64
-pkg . --targets node18-linux-x64 --output bin/alpha-term-linux-x64
-pkg . --targets node18-windows-x64 --output bin/alpha-term-windows-x64.exe
-```
-
-### Creating a Release
-
-```bash
-# Bump version
-npm version patch  # or minor, major
-
-# Push tag
-git push origin v1.0.0
-```
-
-GitHub Actions will automatically build and upload binaries.
-
-## License
+## 📄 License
 
 MIT
 
 ---
 
-Made with ❤️ by Snake
+**Questions?** https://neonalpha.me/discord
