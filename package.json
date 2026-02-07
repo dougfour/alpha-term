@@ -1,0 +1,74 @@
+{
+  "name": "alpha-term",
+  "version": "1.0.0",
+  "description": "Professional CLI for NeonAlpha terminal alerts",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "alpha-term": "./bin/alpha-term.js"
+  },
+  "pkg": {
+    "scripts": [
+      "src/**/*.ts",
+      "!src/**/*.test.ts"
+    ],
+    "assets": [
+      "package.json"
+    ],
+    "targets": [
+      "node18-macos-arm64",
+      "node18-macos-x64",
+      "node18-linux-x64",
+      "node18-windows-x64"
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "build:binaries": "pkg . --targets node18-macos-arm64 --output bin/alpha-term-macos-arm64 && pkg . --targets node18-macos-x64 --output bin/alpha-term-macos-x64 && pkg . --targets node18-linux-x64 --output bin/alpha-term-linux-x64 && pkg . --targets node18-windows-x64 --output bin/alpha-term-windows-x64.exe",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "neonalpha",
+    "twitter",
+    "alerts",
+    "cli",
+    "terminal",
+    "monitoring"
+  ],
+  "author": "Snake <snake@neonalpha.me>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dougfour/alpha-term"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dougfour/alpha-term/issues"
+  },
+  "homepage": "https://neonalpha.me",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.3",
+    "commander": "^11.1.0",
+    "date-fns": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "inquirer": "^9.2.12",
+    "ora": "^8.0.1",
+    "update-notifier": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "pkg": "^5.8.1",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

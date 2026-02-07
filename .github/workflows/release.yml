@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            asset_prefix: macos-arm64
+          - os: macos-13
+            asset_prefix: macos-x64
+          - os: ubuntu-latest
+            asset_prefix: linux-x64
+          - os: windows-latest
+            asset_prefix: windows-x64
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build with pkg
+        run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }}
+      
+      - name: Create release asset
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            mv bin/${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}.exe
+          else
+            mv bin/${{ matrix.asset_prefix }} alpha-term-${{ matrix.asset_prefix }}
+          fi
+      
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            alpha-term-${{ matrix.asset_prefix }}
+            alpha-term-${{ matrix.asset_prefix }}.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
