@@ -56,7 +56,7 @@ jobs:
           RELEASE_URL=$(curl -sH "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" \
             | grep '"upload_url"' | cut -d'"' -f4 | sed 's/{?name,label}//')
-          echo "upload_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+          echo "upload_url=${RELEASE_URL}" >> $GITHUB_OUTPUT
       
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
