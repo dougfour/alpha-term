@@ -42,7 +42,7 @@ jobs:
         run: npm run build
       
       - name: Build with pkg
-        run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }}
+        run: npx pkg . --targets node18-${{ matrix.asset_prefix }} --output bin/${{ matrix.asset_prefix }} --no-bytecode
       
       - name: Create release asset
         run: |
