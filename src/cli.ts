@@ -2,10 +2,23 @@
 
 import { Command } from "commander";
 import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-// Get version from environment variable (set at build time) or fallback
-const VERSION = process.env.ALPHA_TERM_VERSION || "1.0.0";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Get version from version.json (injected at build time)
+let VERSION = "1.0.0";
+try {
+  const versionFile = join(__dirname, "version.json");
+  if (existsSync(versionFile)) {
+    const versionData = JSON.parse(readFileSync(versionFile, "utf-8"));
+    VERSION = versionData.version || "1.0.0";
+  }
+} catch {
+  VERSION = "1.0.0";
+}
 
 // Check if user is logged in
 const isLoggedIn = () => {
