@@ -35,9 +35,7 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
 
   // Set config value
   if (options.set) {
-    // Commander.js captures <key> <value> as an array
-    const key = Array.isArray(options.set) ? options.set[0] : options.set.split(" ")[0];
-    const value = Array.isArray(options.set) ? options.set[1] : options.set.split(" ")[1];
+    const [key, value] = options.set.split(" ");
 
     if (!key || value === undefined) {
       console.log(`${RED}Usage: alpha-term config --set <key> <value>${RESET}\n`);
