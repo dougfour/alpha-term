@@ -164,22 +164,24 @@ program
 
 // Handle no command — show banner, commands, and update check
 if (process.argv.length <= 2) {
-  console.log();
-  console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
-  console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
-  console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
-  console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
-  console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
-  console.log();
-  console.log(`  \x1b[92malpha-term watch\x1b[0m           Live monitoring`);
-  console.log(`  \x1b[92malpha-term run\x1b[0m             View recent alerts`);
-  console.log(`  \x1b[92malpha-term login\x1b[0m           Login with email/password`);
-  console.log(`  \x1b[92malpha-term logout\x1b[0m          Log out`);
-  console.log(`  \x1b[92malpha-term config\x1b[0m          Configure settings`);
-  console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
-  console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
-  console.log();
-  showUpdateNotice();
+  (async () => {
+    console.log();
+    console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
+    console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
+    console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
+    console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
+    console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
+    console.log();
+    console.log(`  \x1b[92malpha-term watch\x1b[0m           Live monitoring`);
+    console.log(`  \x1b[92malpha-term run\x1b[0m             View recent alerts`);
+    console.log(`  \x1b[92malpha-term login\x1b[0m           Login with email/password`);
+    console.log(`  \x1b[92malpha-term logout\x1b[0m          Log out`);
+    console.log(`  \x1b[92malpha-term config\x1b[0m          Configure settings`);
+    console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
+    console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
+    console.log();
+    await showUpdateNotice();
+  })();
 } else {
   program.parse();
 }
