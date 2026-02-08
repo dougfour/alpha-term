@@ -1,5 +1,11 @@
 import { api } from "../lib/api.js";
 
+const GREEN = "\x1b[92m";
+const CYAN = "\x1b[96m";
+const YELLOW = "\x1b[93m";
+const RED = "\x1b[91m";
+const RESET = "\x1b[0m";
+
 interface ConfigOptions {
   set?: string;
   get?: string;
@@ -7,24 +13,15 @@ interface ConfigOptions {
 }
 
 export async function configCommand(options: ConfigOptions): Promise<void> {
-  console.log("\n⚙️  Alpha-Term Configuration\n");
-
-  // Check subscription first (but allow config viewing)
-  const subscription = await api.validateSubscription();
-  const showWarning = !subscription.valid && subscription.tier === "free";
-
-  if (showWarning) {
-    console.log("⚠️  Free tier detected - CLI access requires Pro/Elite.\n");
-  }
+  console.log(`\n${CYAN}Alpha-Term Configuration${RESET}\n`);
 
   // Reset config
   if (options.reset) {
     api.updateConfig({
       soundEnabled: false,
-      pollInterval: 30000,
       saveToFile: undefined,
     });
-    console.log("✅ Configuration reset to defaults.\n");
+    console.log(`${GREEN}Configuration reset to defaults.${RESET}\n`);
     return;
   }
 
@@ -39,9 +36,9 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
   // Set config value
   if (options.set) {
     const [key, value] = options.set.split(" ");
-    
+
     if (!key || value === undefined) {
-      console.log("❌ Usage: alpha-term config --set <key> <value>\n");
+      console.log(`${RED}Usage: alpha-term config --set <key> <value>${RESET}\n`);
       return;
     }
 
@@ -51,35 +48,29 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
       case "sound":
         updates.soundEnabled = value === "true" || value === "on";
         break;
-      case "poll":
-        updates.pollInterval = parseInt(value) * 1000; // Convert to ms
-        break;
       case "save":
         updates.saveToFile = value;
         break;
       default:
-        console.log("❌ Unknown config option: " + key);
-        console.log("\nAvailable options:");
-        console.log("  sound <true|false>  - Enable/disable sound alerts");
-        console.log("  poll <seconds>      - Set poll interval");
-        console.log("  save <file>         - Set auto-save file\n");
+        console.log(`${RED}Unknown config option: ${key}${RESET}`);
+        console.log(`\nAvailable options:`);
+        console.log(`  ${GREEN}sound${RESET} <true|false>  - Enable/disable sound alerts`);
+        console.log(`  ${GREEN}save${RESET} <file>         - Set auto-save file\n`);
         return;
     }
 
     api.updateConfig(updates);
-    console.log("✅ " + key + " set to: " + value + "\n");
+    console.log(`${GREEN}${key} set to: ${value}${RESET}\n`);
     return;
   }
 
   // Display all config
   const config = api.getConfig();
   console.log("Current configuration:");
-  console.log("  Sound alerts: " + (config.soundEnabled ? "enabled" : "disabled"));
-  console.log("  Poll interval: " + (config.pollInterval / 1000) + " seconds");
-  console.log("  Auto-save file: " + (config.saveToFile || "not set"));
-  console.log("\nTo change:");
-  console.log("  alpha-term config --set sound true");
-  console.log("  alpha-term config --set poll 10");
-  console.log("  alpha-term config --set save tweets.json");
-  console.log("  alpha-term config --reset\n");
+  console.log(`  Sound alerts: ${config.soundEnabled ? "enabled" : "disabled"}`);
+  console.log(`  Auto-save file: ${config.saveToFile || "not set"}`);
+  console.log(`\nTo change:`);
+  console.log(`  ${GREEN}alpha-term config --set sound true${RESET}`);
+  console.log(`  ${GREEN}alpha-term config --set save tweets.json${RESET}`);
+  console.log(`  ${GREEN}alpha-term config --reset${RESET}\n`);
 }

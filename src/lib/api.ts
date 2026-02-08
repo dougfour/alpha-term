@@ -13,16 +13,8 @@ interface TokenData {
 }
 
 export interface Config {
-  pollInterval: number;
   soundEnabled: boolean;
   saveToFile?: string;
-  monitors: Monitor[];
-}
-
-export interface Monitor {
-  handle: string;
-  keyword?: string;
-  lastTweetId?: string;
 }
 
 export interface Alert {
@@ -102,9 +94,7 @@ class NeonAlphaClient {
 
     if (!fs.existsSync(CONFIG_FILE)) {
       const defaultConfig: Config = {
-        pollInterval: 30000, // 30 seconds
         soundEnabled: false,
-        monitors: [],
       };
       fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
       return defaultConfig;
@@ -133,22 +123,11 @@ class NeonAlphaClient {
     }
   }
 
-  // Keep for backwards compat with login command
-  async loadToken(): Promise<string | null> {
-    const tokens = this.loadTokens();
-    return tokens?.access_token || null;
-  }
-
-  async saveToken(token: string): Promise<void> {
-    // If it looks like a JWT, save as JSON with just access_token
-    this.saveTokens({ access_token: token });
-  }
-
   saveTokens(tokens: TokenData): void {
     if (!fs.existsSync(CONFIG_DIR)) {
       fs.mkdirSync(CONFIG_DIR, { recursive: true });
     }
-    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
+    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2), { mode: 0o600 });
   }
 
   private async refreshAccessToken(): Promise<boolean> {

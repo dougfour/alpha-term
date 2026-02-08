@@ -136,15 +136,6 @@ function renderNewBanner(count: number): string {
 }
 
 export async function watchCommand(options: WatchOptions): Promise<void> {
-  const config = api.getConfig();
-
-  // Update config with options
-  if (options.sound) {
-    api.updateConfig({ soundEnabled: true });
-  }
-  if (options.save) {
-    api.updateConfig({ saveToFile: options.save });
-  }
 
   // Demo mode if --test flag is passed
   if (options.test) {
@@ -169,14 +160,14 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
   // Display banner
   printBanner();
 
-  console.log(`${CYAN}Press Ctrl+C to quit | Polling every ${(config.pollInterval || 30000) / 1000}s${RESET}`);
+  console.log(`${CYAN}Press Ctrl+C to quit${RESET}`);
   console.log(`${YELLOW}Waiting for new tweets...${RESET}\n`);
 
   // Track which alerts we've already shown
   const shownIds = new Set<string>();
   let firstRun = true;
   let tweetCount = 0;
-  const pollInterval = config.pollInterval || 30000;
+  const POLL_INTERVAL = 30000;
 
   const poll = async () => {
     try {
@@ -217,10 +208,9 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           shownIds.add(alert.id);
 
           // Save to file if requested
-          const saveFile = options.save || config.saveToFile;
-          if (saveFile) {
+          if (options.save) {
             const line = `--- @${alert.author_handle} | ${formatDateTime(alert.created_at)} ---\n${alert.tweet_text}\nID: ${alert.id}\n\n`;
-            fs.appendFileSync(saveFile, line);
+            fs.appendFileSync(options.save, line);
           }
 
           if (options.json) {
@@ -238,21 +228,35 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           }
           console.log(`${GREEN}✓ Got ${newAlerts.length} new tweet(s)${RESET}`);
         }
+
+        // Prevent unbounded growth of shown IDs
+        if (shownIds.size > 1000) {
+          const entries = Array.from(shownIds);
+          shownIds.clear();
+          for (const id of entries.slice(-500)) {
+            shownIds.add(id);
+          }
+        }
       }
     } catch (error: any) {
       if (error?.response?.status === 401) {
         console.log(`\n${RED}Session expired. Please run 'alpha-term login' to sign in again.${RESET}\n`);
         process.exit(1);
       }
+      if (error?.response?.status === 429) {
+        console.log(`${YELLOW}Rate limited. Waiting before next check...${RESET}`);
+        return;
+      }
       console.error(`${RED}Error fetching alerts:${RESET}`, error instanceof Error ? error.message : "Unknown error");
     }
   };
 
-  // Initial poll
-  await poll();
-
-  // Set up polling
-  setInterval(poll, pollInterval);
+  // Initial poll, then schedule next after completion
+  const loop = async () => {
+    await poll();
+    setTimeout(loop, POLL_INTERVAL);
+  };
+  await loop();
 }
 
 async function runWatchDemo(options: WatchOptions): Promise<void> {

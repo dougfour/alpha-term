@@ -47,24 +47,9 @@ function promptPassword(question: string): Promise<string> {
   });
 }
 
-export async function loginCommand(apiKey?: string): Promise<void> {
+export async function loginCommand(): Promise<void> {
   console.log("\n🔐 NeonAlpha CLI Login\n");
 
-  // If a raw token was passed (legacy), save it directly
-  if (apiKey) {
-    await api.saveToken(apiKey);
-    console.log("Validating...");
-    const subscription = await api.validateSubscription();
-    if (!subscription.valid) {
-      console.log("❌ " + subscription.error + "\n");
-      await api.saveToken("");
-      return;
-    }
-    console.log(`✅ Login successful! Tier: ${subscription.tier?.toUpperCase()}\n`);
-    return;
-  }
-
-  // Interactive email/password login
   const email = await prompt("Email: ");
   if (!email) {
     console.log("❌ No email provided.\n");
