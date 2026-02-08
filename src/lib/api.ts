@@ -71,7 +71,7 @@ class NeonAlphaClient {
 
     if (!fs.existsSync(CONFIG_FILE)) {
       const defaultConfig: Config = {
-        apiUrl: "https://api.neonalpha.me/v1",
+        apiUrl: "https://api.neonalpha.me/api/v1",
         pollInterval: 30000, // 30 seconds
         soundEnabled: false,
         monitors: [],
@@ -109,37 +109,28 @@ class NeonAlphaClient {
     }
 
     try {
-      const response = await this.client.post("/cli/validate");
-      const { valid, tier, expires_at } = response.data;
-
-      if (!valid) {
-        return {
-          valid: false,
-          tier: null,
-          error: "Subscription is inactive or expired.",
-        };
-      }
+      const response = await this.client.get("/auth/me");
+      const { subscription_tier } = response.data;
 
       // Check if tier allows CLI access
-      if (tier === "free") {
+      if (!subscription_tier || subscription_tier === "free") {
         return {
           valid: false,
-          tier: "free",
+          tier: (subscription_tier || "free") as "free",
           error: "Alpha-Term CLI requires Pro or Elite subscription.\nVisit https://neonalpha.me/upgrade to upgrade.",
         };
       }
 
       return {
         valid: true,
-        tier: tier as "pro" | "elite",
-        expiresAt: expires_at,
+        tier: subscription_tier as "pro" | "elite",
       };
     } catch (error) {
-      if (AxiosError && (error as AxiosError).response?.status === 403) {
+      if ((error as AxiosError).response?.status === 401) {
         return {
           valid: false,
           tier: null,
-          error: "Access denied. Pro or Elite subscription required.\nVisit https://neonalpha.me/upgrade",
+          error: "Invalid or expired API key. Get a new one at:\nhttps://neonalpha.me/dashboard/settings/api-keys",
         };
       }
       return {

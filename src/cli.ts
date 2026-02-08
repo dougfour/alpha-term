@@ -9,9 +9,9 @@ const VERSION = "{{VERSION}}";
 
 // Check if user is logged in
 const isLoggedIn = () => {
-  const configDir = join(process.env.HOME || "", ".config", "alpha-term");
-  const configFile = join(configDir, "config.json");
-  return existsSync(configFile);
+  const configDir = join(process.env.HOME || "", ".alpha-term");
+  const tokenFile = join(configDir, "token");
+  return existsSync(tokenFile);
 };
 
 // Show welcome message for new users
