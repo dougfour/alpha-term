@@ -24,6 +24,16 @@ interface WatchOptions {
   test?: boolean;
 }
 
+function printBanner(): void {
+  console.log();
+  console.log(`${CYAN}╔═╗${RESET}  ${CYAN}╦${RESET}    ${CYAN}╔═╗${RESET}  ${CYAN}╦ ╦${RESET}  ${CYAN}╔═╗${RESET}    ${YELLOW}═╦═${RESET}  ${YELLOW}╔═╗${RESET}  ${YELLOW}╦═╗${RESET}  ${YELLOW}╔╦╗${RESET}`);
+  console.log(`${CYAN}╠═╣${RESET}  ${CYAN}║${RESET}    ${CYAN}╠═╝${RESET}  ${CYAN}╠═╣${RESET}  ${CYAN}╠═╣${RESET}     ${YELLOW}║${RESET}   ${YELLOW}╠═${RESET}   ${YELLOW}╠╦╝${RESET}  ${YELLOW}║║║${RESET}`);
+  console.log(`${CYAN}╩ ╩${RESET}  ${CYAN}╩═╝${RESET}  ${CYAN}╩${RESET}    ${CYAN}╩ ╩${RESET}  ${CYAN}╩ ╩${RESET}     ${YELLOW}╩${RESET}   ${YELLOW}╚═╝${RESET}  ${YELLOW}╩╚═${RESET}  ${YELLOW}╩ ╩${RESET}`);
+  console.log(`${GREEN}══════════════════════════════════════════════════${RESET}`);
+  console.log(`${MAGENTA}       <<< NEON ALPHA TERMINAL ALERTS >>>${RESET}`);
+  console.log();
+}
+
 function wrapText(text: string, width: number = 60): string[] {
   const lines: string[] = [];
   for (const paragraph of text.split("\n")) {
@@ -44,8 +54,19 @@ function wrapText(text: string, width: number = 60): string[] {
 
 function formatTime(createdAt: string): string {
   try {
-    const dt = new Date(createdAt);
-    return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+    // Ensure timestamp is parsed as UTC
+    let isoStr = createdAt;
+    if (!isoStr.endsWith("Z") && !isoStr.includes("+")) {
+      isoStr += "Z";
+    }
+    const dt = new Date(isoStr);
+    const hours = dt.getHours().toString().padStart(2, "0");
+    const minutes = dt.getMinutes().toString().padStart(2, "0");
+    const seconds = dt.getSeconds().toString().padStart(2, "0");
+    const tzName = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+      .formatToParts(dt)
+      .find((p) => p.type === "timeZoneName")?.value || "";
+    return `${hours}:${minutes}:${seconds} ${tzName}`;
   } catch {
     return createdAt;
   }
@@ -53,11 +74,32 @@ function formatTime(createdAt: string): string {
 
 function formatDateTime(createdAt: string): string {
   try {
-    const dt = new Date(createdAt);
-    return dt.toLocaleString([], { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+    let isoStr = createdAt;
+    if (!isoStr.endsWith("Z") && !isoStr.includes("+")) {
+      isoStr += "Z";
+    }
+    const dt = new Date(isoStr);
+    const y = dt.getFullYear();
+    const mo = (dt.getMonth() + 1).toString().padStart(2, "0");
+    const d = dt.getDate().toString().padStart(2, "0");
+    const h = dt.getHours().toString().padStart(2, "0");
+    const mi = dt.getMinutes().toString().padStart(2, "0");
+    const s = dt.getSeconds().toString().padStart(2, "0");
+    const tzName = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+      .formatToParts(dt)
+      .find((p) => p.type === "timeZoneName")?.value || "";
+    return `${y}-${mo}-${d} ${h}:${mi}:${s} ${tzName}`;
   } catch {
     return createdAt;
   }
+}
+
+function localTimeNow(): string {
+  const dt = new Date();
+  const h = dt.getHours().toString().padStart(2, "0");
+  const m = dt.getMinutes().toString().padStart(2, "0");
+  const s = dt.getSeconds().toString().padStart(2, "0");
+  return `${h}:${m}:${s}`;
 }
 
 function renderAlert(alert: Alert, isLast: boolean = true): string {
@@ -125,13 +167,8 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
   console.log(`${GREEN}${subscription.tier?.toUpperCase()}${RESET} subscription validated\n`);
 
   // Display banner
-  console.log(`${GREEN}${BOX_TL}${BOX_H.repeat(75)}${BOX_TR}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                                                                           ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                    ${BOLD}${CYAN}<<< ALPHA-TERM LIVE MODE >>>${RESET}                        ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                                                                           ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_ML}${BOX_H.repeat(75)}${BOX_MR}${RESET}`);
+  printBanner();
 
-  console.log(`\n${GREEN}>>> ALPHA-TERM LIVE MODE <<<${RESET}`);
   console.log(`${CYAN}Press Ctrl+C to quit | Polling every ${(config.pollInterval || 30000) / 1000}s${RESET}`);
   console.log(`${YELLOW}Waiting for new tweets...${RESET}\n`);
 
@@ -166,7 +203,6 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           shownIds.add(alert.id);
         }
         firstRun = false;
-        console.log(`${CYAN}Tracking ${filtered.length} existing alert(s). Waiting for new tweets...${RESET}\n`);
       } else {
         // Only show alerts we haven't seen before
         const newAlerts = filtered.filter((a) => !shownIds.has(a.id));
@@ -192,7 +228,7 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           } else {
             console.log();
             console.log(renderAlert(alert));
-            console.log(`${CYAN}>>> #${tweetCount} | ${new Date().toLocaleTimeString()}${RESET}\n`);
+            console.log(`${CYAN}>>> #${tweetCount} | ${localTimeNow()}${RESET}\n`);
           }
         }
 
@@ -220,11 +256,7 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 }
 
 async function runWatchDemo(options: WatchOptions): Promise<void> {
-  console.log(`\n${GREEN}${BOX_TL}${BOX_H.repeat(75)}${BOX_TR}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                                                                           ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                    ${BOLD}${CYAN}<<< ALPHA-TERM DEMO MODE >>>${RESET}                        ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_V}${RESET}                                                                           ${GREEN}${BOX_V}${RESET}`);
-  console.log(`${GREEN}${BOX_ML}${BOX_H.repeat(75)}${BOX_MR}${RESET}`);
+  printBanner();
 
   const demoAlert: Alert = {
     id: "demo-1",
@@ -239,7 +271,7 @@ async function runWatchDemo(options: WatchOptions): Promise<void> {
 
   console.log();
   console.log(renderAlert(demoAlert));
-  console.log(`${CYAN}>>> #1 | ${new Date().toLocaleTimeString()}${RESET}\n`);
+  console.log(`${CYAN}>>> #1 | ${localTimeNow()}${RESET}\n`);
 
   console.log(`${GREEN}${BOX_H.repeat(55)}${RESET}`);
   console.log(`${YELLOW}To use alpha-term for real:${RESET}`);

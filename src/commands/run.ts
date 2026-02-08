@@ -7,6 +7,7 @@ const YELLOW = "\x1b[93m";
 const RED = "\x1b[91m";
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
+const MAGENTA = "\x1b[95m";
 
 // Box drawing
 const BOX_TL = "┌", BOX_TR = "┐", BOX_BL = "└", BOX_BR = "┘";
@@ -18,6 +19,16 @@ interface RunOptions {
   handle?: string;
   json?: boolean;
   limit?: number;
+}
+
+function printBanner(): void {
+  console.log();
+  console.log(`${CYAN}╔═╗${RESET}  ${CYAN}╦${RESET}    ${CYAN}╔═╗${RESET}  ${CYAN}╦ ╦${RESET}  ${CYAN}╔═╗${RESET}    ${YELLOW}═╦═${RESET}  ${YELLOW}╔═╗${RESET}  ${YELLOW}╦═╗${RESET}  ${YELLOW}╔╦╗${RESET}`);
+  console.log(`${CYAN}╠═╣${RESET}  ${CYAN}║${RESET}    ${CYAN}╠═╝${RESET}  ${CYAN}╠═╣${RESET}  ${CYAN}╠═╣${RESET}     ${YELLOW}║${RESET}   ${YELLOW}╠═${RESET}   ${YELLOW}╠╦╝${RESET}  ${YELLOW}║║║${RESET}`);
+  console.log(`${CYAN}╩ ╩${RESET}  ${CYAN}╩═╝${RESET}  ${CYAN}╩${RESET}    ${CYAN}╩ ╩${RESET}  ${CYAN}╩ ╩${RESET}     ${YELLOW}╩${RESET}   ${YELLOW}╚═╝${RESET}  ${YELLOW}╩╚═${RESET}  ${YELLOW}╩ ╩${RESET}`);
+  console.log(`${GREEN}══════════════════════════════════════════════════${RESET}`);
+  console.log(`${MAGENTA}       <<< NEON ALPHA TERMINAL ALERTS >>>${RESET}`);
+  console.log();
 }
 
 function wrapText(text: string, width: number = 60): string[] {
@@ -40,11 +51,29 @@ function wrapText(text: string, width: number = 60): string[] {
 
 function formatTime(createdAt: string): string {
   try {
-    const dt = new Date(createdAt);
-    return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+    let isoStr = createdAt;
+    if (!isoStr.endsWith("Z") && !isoStr.includes("+")) {
+      isoStr += "Z";
+    }
+    const dt = new Date(isoStr);
+    const hours = dt.getHours().toString().padStart(2, "0");
+    const minutes = dt.getMinutes().toString().padStart(2, "0");
+    const seconds = dt.getSeconds().toString().padStart(2, "0");
+    const tzName = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+      .formatToParts(dt)
+      .find((p) => p.type === "timeZoneName")?.value || "";
+    return `${hours}:${minutes}:${seconds} ${tzName}`;
   } catch {
     return createdAt;
   }
+}
+
+function localTimeNow(): string {
+  const dt = new Date();
+  const h = dt.getHours().toString().padStart(2, "0");
+  const m = dt.getMinutes().toString().padStart(2, "0");
+  const s = dt.getSeconds().toString().padStart(2, "0");
+  return `${h}:${m}:${s}`;
 }
 
 function renderAlert(alert: Alert, isLast: boolean): string {
@@ -116,14 +145,8 @@ export async function runCommand(options: RunOptions): Promise<void> {
       return;
     }
 
-    // Header
-    const title = options.handle ? `@${options.handle.replace(/^@/, "")}` : "ALL ALERTS";
-    const timeStr = new Date().toLocaleTimeString();
-
-    console.log(`${GREEN}${BOX_TL}${BOX_H.repeat(8)} ALPHA-TERM ${BOX_H.repeat(8)}${BOX_TR}${RESET}`);
-    console.log(`${GREEN}${BOX_V}${RESET} ${BOLD}${CYAN}NeonAlpha Alerts${RESET}                     ${GREEN}${BOX_V}${RESET}`);
-    console.log(`${GREEN}${BOX_V}${RESET} ${title} | ${GREEN}*${RESET} ${timeStr}              ${GREEN}${BOX_V}${RESET}`);
-    console.log(`${GREEN}${BOX_ML}${BOX_H.repeat(75)}${BOX_MR}${RESET}`);
+    // Banner
+    printBanner();
 
     // Show alerts oldest first (newest at bottom)
     const sorted = [...filtered].reverse();

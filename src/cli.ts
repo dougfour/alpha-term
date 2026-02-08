@@ -26,22 +26,15 @@ const isLoggedIn = () => {
 
 // Show welcome message for new users
 const showWelcome = () => {
-  console.log(`\x1b[92m
-╔━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╗
-║                                                                        ║
-║\x1b[93m  ___   _     ______ _   _   ___     _____ ______________  ___          \x1b[0m\x1b[92m║
-║\x1b[93m / _ \\ | |    | ___ \\ | | | / _ \\   |_   _|  ___| ___ \\  \\/  |         \x1b[0m\x1b[92m║
-║\x1b[93m/ /_\\ \\| |    | |_/ / |_| |/ /_\\ \\    | | | |__ | |_/ / .  . |         \x1b[0m\x1b[92m║
-║\x1b[93m|  _  || |    |  __/|  _  ||  _  |    | | |  __||    /| |\\/| |         \x1b[0m\x1b[92m║
-║\x1b[93m| | | || |____| |   | | | || | | |    | | | |___| |\\ \\ |  | |         \x1b[0m\x1b[92m║
-║\x1b[93m\\_| |_/\\_____/\\_|   \\_| |_/\\_| |_/    \\_/ \\____/\\_| \\_\\_|  |_/         \x1b[0m\x1b[92m║
-║                                                                        ║
-║\x1b[95m  <<< TERMINAL ALERTS FOR NEON ALPHA >>>                                \x1b[0m\x1b[92m║
-║                                                                        ║
-╚━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╝
-\x1b[0m`);
+  console.log();
+  console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
+  console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
+  console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
+  console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
+  console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
 
-  console.log(`\x1b[93mGETTING STARTED:\x1b[0m
+  console.log(`
+\x1b[93mGETTING STARTED:\x1b[0m
 
    1. Subscribe at \x1b[96mhttps://neonalpha.me\x1b[0m (Pro or Elite)
    2. Run: \x1b[92malpha-term login\x1b[0m
@@ -169,9 +162,23 @@ program
     await configCommand(options);
   });
 
-// Handle no command — show help + update check
+// Handle no command — show banner, commands, and update check
 if (process.argv.length <= 2) {
-  program.outputHelp();
+  console.log();
+  console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
+  console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
+  console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
+  console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
+  console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
+  console.log();
+  console.log(`  \x1b[92malpha-term watch\x1b[0m           Live monitoring`);
+  console.log(`  \x1b[92malpha-term run\x1b[0m             View recent alerts`);
+  console.log(`  \x1b[92malpha-term login\x1b[0m           Login with email/password`);
+  console.log(`  \x1b[92malpha-term logout\x1b[0m          Log out`);
+  console.log(`  \x1b[92malpha-term config\x1b[0m          Configure settings`);
+  console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
+  console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
+  console.log();
   showUpdateNotice();
 } else {
   program.parse();
