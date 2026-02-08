@@ -106,8 +106,7 @@ import { watchCommand } from "./commands/watch.js";
 import { loginCommand } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
 import { listCommand } from "./commands/list.js";
-import { addCommand } from "./commands/add.js";
-import { removeCommand } from "./commands/remove.js";
+import { runCommand } from "./commands/run.js";
 import { testCommand } from "./commands/test.js";
 import { configCommand } from "./commands/config.js";
 import { updateCommand, checkCommand } from "./commands/update.js";
@@ -148,29 +147,24 @@ program
     await logoutCommand();
   });
 
-// Monitor management
+// View recent alerts
+program
+  .command("run")
+  .description("View recent alerts")
+  .option("-k, --keyword <text>", "Filter by keyword")
+  .option("-h, --handle <user>", "Filter by Twitter handle")
+  .option("-j, --json", "Output as JSON")
+  .option("-l, --limit <number>", "Number of alerts to show", "20")
+  .action(async (options) => {
+    await runCommand({ ...options, limit: parseInt(options.limit) });
+  });
+
+// Account management info
 program
   .command("list")
-  .description("List your monitored accounts")
+  .description("Show how to manage your watch list")
   .action(async () => {
     await listCommand();
-  });
-
-program
-  .command("add")
-  .description("Add a Twitter account to monitor")
-  .argument("<handle>", "Twitter handle (with or without @)")
-  .option("-k, --keyword <text>", "Filter tweets by keyword")
-  .action(async (handle, options) => {
-    await addCommand(handle, options);
-  });
-
-program
-  .command("remove")
-  .description("Remove a Twitter account from monitoring")
-  .argument("<handle>", "Twitter handle (with or without @)")
-  .action(async (handle) => {
-    await removeCommand(handle);
   });
 
 // Configuration

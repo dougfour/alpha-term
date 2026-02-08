@@ -237,27 +237,6 @@ class NeonAlphaClient {
     return response.data;
   }
 
-  async addMonitor(handle: string, keyword?: string): Promise<void> {
-    const exists = this.config.monitors.find((m) => m.handle === handle);
-    if (exists) {
-      if (keyword) {
-        exists.keyword = keyword;
-      }
-    } else {
-      this.config.monitors.push({ handle, keyword });
-    }
-    this.saveConfig();
-  }
-
-  async removeMonitor(handle: string): Promise<void> {
-    this.config.monitors = this.config.monitors.filter((m) => m.handle !== handle);
-    this.saveConfig();
-  }
-
-  getMonitors(): Monitor[] {
-    return this.config.monitors;
-  }
-
   getConfig(): Config {
     return this.config;
   }
