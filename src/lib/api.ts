@@ -220,6 +220,18 @@ class NeonAlphaClient {
     }
   }
 
+  async login(email: string, password: string): Promise<{ access_token: string; refresh_token: string }> {
+    // The API uses OAuth2PasswordRequestForm which expects form-encoded data
+    const params = new URLSearchParams();
+    params.append("username", email);
+    params.append("password", password);
+
+    const response = await axios.post(`${API_URL}/auth/login`, params, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    return response.data;
+  }
+
   async getAlerts(limit: number = 20): Promise<Alert[]> {
     const response = await this.client.get("/alerts", { params: { limit } });
     return response.data;

@@ -38,10 +38,8 @@ const showWelcome = () => {
 🚀 GETTING STARTED:
 
    1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Login at https://neonalpha.me, then open DevTools:
-      Application > Local Storage > copy access_token & refresh_token
-   3. Run: alpha-term login ACCESS_TOKEN --refresh REFRESH_TOKEN
-   4. Run: alpha-term watch
+   2. Run: alpha-term login
+   3. Run: alpha-term watch
 
 ⚠️  NOT LOGGED IN
 
@@ -59,8 +57,7 @@ const showLoginPrompt = () => {
    You need to login first.
 
    1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Login, then DevTools > Application > Local Storage
-   3. Run: alpha-term login ACCESS_TOKEN --refresh REFRESH_TOKEN
+   2. Run: alpha-term login
 
 `);
 };
@@ -103,7 +100,7 @@ if (!isLoggedIn() && !noAuthCommands.includes(command)) {
 }
 
 import { watchCommand } from "./commands/watch.js";
-import { loginCommand, loginWithTokens } from "./commands/login.js";
+import { loginCommand } from "./commands/login.js";
 import { listCommand } from "./commands/list.js";
 import { addCommand } from "./commands/add.js";
 import { removeCommand } from "./commands/remove.js";
@@ -134,15 +131,10 @@ program
 
 // Authentication
 program
-  .command("login [apiKey]")
-  .description("Login with your NeonAlpha access token")
-  .option("-r, --refresh <token>", "Refresh token for auto-renewal (recommended)")
-  .action(async (apiKey, options) => {
-    if (apiKey && options.refresh) {
-      await loginWithTokens(apiKey, options.refresh);
-    } else {
-      await loginCommand(apiKey);
-    }
+  .command("login")
+  .description("Login with your NeonAlpha email and password")
+  .action(async () => {
+    await loginCommand();
   });
 
 // Monitor management

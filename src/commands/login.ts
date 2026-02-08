@@ -1,91 +1,81 @@
 import { api } from "../lib/api.js";
 import * as readline from "readline";
 
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise<string>((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
 export async function loginCommand(apiKey?: string): Promise<void> {
   console.log("\n🔐 NeonAlpha CLI Login\n");
 
-  // Get API key from args or prompt
-  let key = apiKey;
-
-  if (!key) {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    key = await new Promise<string>((resolve) => {
-      rl.question("Enter your NeonAlpha API key: ", (answer) => {
-        rl.close();
-        resolve(answer.trim());
-      });
-    });
-  }
-
-  if (!key) {
-    console.log("❌ No API key provided.\n");
-    console.log("To get your tokens:");
-    console.log("1. Visit https://neonalpha.me and login");
-    console.log("2. Open DevTools > Application > Local Storage");
-    console.log("3. Copy access_token and refresh_token");
-    console.log('4. Run: alpha-term login ACCESS_TOKEN --refresh REFRESH_TOKEN\n');
+  // If a raw token was passed (legacy), save it directly
+  if (apiKey) {
+    await api.saveToken(apiKey);
+    console.log("Validating...");
+    const subscription = await api.validateSubscription();
+    if (!subscription.valid) {
+      console.log("❌ " + subscription.error + "\n");
+      await api.saveToken("");
+      return;
+    }
+    console.log(`✅ Login successful! Tier: ${subscription.tier?.toUpperCase()}\n`);
     return;
   }
 
-  // Save token(s) - the refresh token will be picked up from --refresh flag
-  // which is passed via the CLI option handler
-  await api.saveToken(key);
-
-  // Validate subscription
-  console.log("Validating subscription...");
-  const subscription = await api.validateSubscription();
-
-  if (!subscription.valid) {
-    console.log("❌ Access denied.\n");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(subscription.error);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-
-    // Clear invalid token
-    await api.saveToken("");
+  // Interactive email/password login
+  const email = await prompt("Email: ");
+  if (!email) {
+    console.log("❌ No email provided.\n");
     return;
   }
 
-  console.log(`✅ Login successful!`);
-  console.log(`   Tier: ${subscription.tier?.toUpperCase()}`);
-  console.log("\nYou're now ready to use alpha-term!");
-  console.log("\nNext steps:");
-  console.log("  • Run 'alpha-term watch' to start monitoring");
-  console.log("  • Run 'alpha-term list' to see recent alerts\n");
-}
-
-export async function loginWithTokens(accessToken: string, refreshToken?: string): Promise<void> {
-  console.log("\n🔐 NeonAlpha CLI Login\n");
-
-  api.saveTokens({
-    access_token: accessToken,
-    ...(refreshToken ? { refresh_token: refreshToken } : {}),
-  });
-
-  // Validate subscription
-  console.log("Validating subscription...");
-  const subscription = await api.validateSubscription();
-
-  if (!subscription.valid) {
-    console.log("❌ Access denied.\n");
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(subscription.error);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    await api.saveToken("");
+  // Password input (note: visible in terminal - readline limitation)
+  const password = await prompt("Password: ");
+  if (!password) {
+    console.log("❌ No password provided.\n");
     return;
   }
 
-  console.log(`✅ Login successful!`);
-  console.log(`   Tier: ${subscription.tier?.toUpperCase()}`);
-  if (refreshToken) {
-    console.log("   Token auto-refresh: enabled");
+  console.log("\nLogging in...");
+
+  try {
+    const tokens = await api.login(email, password);
+
+    api.saveTokens(tokens);
+
+    // Validate subscription tier
+    const subscription = await api.validateSubscription();
+
+    if (!subscription.valid) {
+      console.log("❌ " + subscription.error + "\n");
+      return;
+    }
+
+    console.log(`\n✅ Login successful!`);
+    console.log(`   Tier: ${subscription.tier?.toUpperCase()}`);
+    console.log("   Token auto-refresh: enabled\n");
+    console.log("You're now ready to use alpha-term!");
+    console.log("\n  Run 'alpha-term watch' to start monitoring\n");
+  } catch (error: any) {
+    const status = error?.response?.status;
+    if (status === 401) {
+      console.log("\n❌ Incorrect email or password.\n");
+    } else if (status === 429) {
+      console.log("\n❌ Too many login attempts. Please wait a minute.\n");
+    } else {
+      console.log("\n❌ Login failed: " + (error?.response?.data?.detail || error?.message || "Unknown error") + "\n");
+    }
+
+    console.log("If you signed up with Google, set a password first at:");
+    console.log("  https://neonalpha.me/dashboard/settings\n");
   }
-  console.log("\nYou're now ready to use alpha-term!");
-  console.log("\nNext steps:");
-  console.log("  • Run 'alpha-term watch' to start monitoring");
-  console.log("  • Run 'alpha-term list' to see recent alerts\n");
 }
