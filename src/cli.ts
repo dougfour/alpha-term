@@ -68,25 +68,18 @@ const showLoginPrompt = () => {
 // Version check
 import { checkForUpdates } from "./lib/updater.js";
 
-// Check for updates on startup (non-blocking)
-const runVersionCheck = async () => {
-  // Skip if running in test mode or NO_UPDATE_CHECK is set
-  if (process.env.NO_UPDATE_CHECK === "1" || process.argv.includes("--test")) {
-    return;
-  }
-  
+// Check for updates (non-blocking, shows curl command if update available)
+const showUpdateNotice = async () => {
   try {
-    const result = await checkForUpdates({ silent: true });
+    const result = await checkForUpdates();
     if (result.hasUpdate) {
-      console.log("\n" + result.message + "\n");
+      console.log(`\x1b[93mUpdate available: ${VERSION} \u2192 ${result.latestVersion}\x1b[0m`);
+      console.log(`   Run: \x1b[96mcurl -sL https://neonalpha.me/install | bash\x1b[0m\n`);
     }
   } catch {
     // Silent fail
   }
 };
-
-// Run version check in background
-runVersionCheck();
 
 // Show welcome for new users when running without args
 if (process.argv.length <= 2 && !isLoggedIn()) {
@@ -96,7 +89,7 @@ if (process.argv.length <= 2 && !isLoggedIn()) {
 
 // Show login prompt for any command if not logged in
 const command = process.argv[2] || "";
-const noAuthCommands = ["--version", "-V", "--help", "-h", "--test", "login", "logout"];
+const noAuthCommands = ["--version", "-V", "--help", "-h", "login", "logout"];
 if (!isLoggedIn() && !noAuthCommands.includes(command)) {
   showLoginPrompt();
   process.exit(0);
@@ -107,9 +100,7 @@ import { loginCommand } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
 import { listCommand } from "./commands/list.js";
 import { runCommand } from "./commands/run.js";
-import { testCommand } from "./commands/test.js";
 import { configCommand } from "./commands/config.js";
-import { updateCommand, checkCommand } from "./commands/update.js";
 
 const program = new Command();
 
@@ -178,33 +169,10 @@ program
     await configCommand(options);
   });
 
-// Test mode
-program
-  .command("test")
-  .description("Test alpha-term with a simulated tweet")
-  .action(async () => {
-    await testCommand();
-  });
-
-// Update command
-program
-  .command("update")
-  .description("Update alpha-term to the latest version")
-  .action(async () => {
-    await updateCommand();
-  });
-
-// Check command
-program
-  .command("check")
-  .description("Check for available updates")
-  .action(async () => {
-    await checkCommand();
-  });
-
-// Handle no command (show help)
+// Handle no command — show help + update check
 if (process.argv.length <= 2) {
   program.outputHelp();
+  showUpdateNotice();
 } else {
   program.parse();
 }

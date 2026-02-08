@@ -42,7 +42,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "Building version: $VERSION"
 
-          perl -i -pe "s/\{\{VERSION\}\}/$VERSION/g" src/cli.ts
+          perl -i -pe "s/\{\{VERSION\}\}/$VERSION/g" src/cli.ts src/lib/updater.ts
 
           TARGET_FLAG=""
           if [ -n "${{ matrix.bun_target }}" ]; then
