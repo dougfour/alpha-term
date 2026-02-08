@@ -26,10 +26,13 @@ export interface Monitor {
 
 export interface Alert {
   id: string;
-  text: string;
-  handle: string;
-  timestamp: number;
-  url: string;
+  monitor_id: string;
+  tweet_id: string;
+  tweet_text: string;
+  author_handle: string;
+  author_name: string;
+  author_avatar: string;
+  created_at: string;
 }
 
 export interface SubscriptionStatus {
@@ -140,12 +143,8 @@ class NeonAlphaClient {
     }
   }
 
-  async getAlerts(params: {
-    handle?: string;
-    keyword?: string;
-    limit?: number;
-  }): Promise<Alert[]> {
-    const response = await this.client.get("/alerts", { params });
+  async getAlerts(limit: number = 20): Promise<Alert[]> {
+    const response = await this.client.get("/alerts", { params: { limit } });
     return response.data;
   }
 

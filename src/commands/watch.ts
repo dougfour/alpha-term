@@ -13,7 +13,7 @@ interface WatchOptions {
 
 export async function watchCommand(options: WatchOptions): Promise<void> {
   const config = api.getConfig();
-  
+
   // Update config with options
   if (options.sound) {
     api.updateConfig({ soundEnabled: true });
@@ -41,59 +41,69 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
     return;
   }
 
-  console.log(`✅ ${subscription.tier?.toUpperCase()} subscription validated`);
-  if (subscription.expiresAt) {
-    console.log(`   Expires: ${subscription.expiresAt}\n`);
-  }
+  console.log(`✅ ${subscription.tier?.toUpperCase()} subscription validated\n`);
 
   // Display banner
-  console.clear();
   console.log(`
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   ██████╗ ██╗   ██╗██████╗ ███████╗██████╗ ██╗  ██╗ █████╗  ██████╗ ║
-║  ██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔══██╗██║  ██║██╔══██╗██╔════╝ ║
-║  ██║   ██║██║   ██║██████╔╝█████╗  ██████╔╝███████║███████║██║  ███╗║
-║  ██║   ██║██║   ██║██╔══██╗██╔══╝  ██╔══██╗██╔══██║██╔══██║██║   ██║║
-║  ╚██████╔╝╚██████╔╝██║  ██║███████╗██║  ██║██║  ██║██║  ██║╚██████╔╝║
-║   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ║
-║                                                                   ║
-║                    <<< TERMINAL ALERTS FOR NEON ALPHA >>>          ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                         ║
+║                    <<< ALPHA-TERM LIVE MODE >>>                         ║
+║                                                                         ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 `);
 
-  console.log("🔔 Monitoring tweets...\n");
+  console.log("🔔 Monitoring tweets...");
   console.log("Press Ctrl+C to quit.\n");
 
-  // Main polling loop
-  let pollInterval = config.pollInterval || 30000;
-  
+  // Track which alerts we've already shown
+  const shownIds = new Set<string>();
+  let firstRun = true;
+  let tweetCount = 0;
+  const pollInterval = config.pollInterval || 30000;
+
   const poll = async () => {
     try {
-      const alerts = await api.getAlerts({
-        handle: options.handle,
-        keyword: options.keyword,
-        limit: 10,
-      });
+      const alerts = await api.getAlerts(50);
 
-      // Filter new alerts
-      const monitors = options.handle 
-        ? [{ handle: options.handle }]
-        : api.getMonitors();
+      // Filter by handle/keyword if specified via CLI options
+      let filtered = alerts;
+      if (options.handle) {
+        const handle = options.handle.replace(/^@/, "").toLowerCase();
+        filtered = filtered.filter(
+          (a) => a.author_handle.toLowerCase() === handle
+        );
+      }
+      if (options.keyword) {
+        const kw = options.keyword.toLowerCase();
+        filtered = filtered.filter((a) =>
+          a.tweet_text.toLowerCase().includes(kw)
+        );
+      }
 
-      for (const monitor of monitors) {
-        const monitorAlerts = alerts.filter((a) => a.handle === monitor.handle);
-        
-        for (const alert of monitorAlerts) {
-          // Check if we already displayed this
-          if (!monitor.lastTweetId || alert.id > monitor.lastTweetId) {
-            displayAlert(alert, options);
-            
-            // Update last tweet id
-            monitor.lastTweetId = alert.id;
-            api.updateConfig({ monitors: api.getMonitors() });
+      if (firstRun) {
+        // On first run, record existing IDs but don't display them
+        for (const alert of filtered) {
+          shownIds.add(alert.id);
+        }
+        firstRun = false;
+        console.log(`📡 Tracking ${filtered.length} existing alert(s). Waiting for new tweets...\n`);
+      } else {
+        // Only show alerts we haven't seen before
+        const newAlerts = filtered.filter((a) => !shownIds.has(a.id));
+
+        // Show oldest first
+        for (const alert of newAlerts.reverse()) {
+          tweetCount++;
+          shownIds.add(alert.id);
+          displayAlert(alert, options);
+          console.log(`>>> #${tweetCount} | ${new Date().toLocaleTimeString()}\n`);
+        }
+
+        if (newAlerts.length > 0) {
+          if (options.sound) {
+            process.stdout.write("\x07"); // Terminal bell
           }
+          console.log(`✓ Got ${newAlerts.length} new tweet(s)\n`);
         }
       }
     } catch (error) {
@@ -109,21 +119,12 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 }
 
 async function runWatchDemo(options: WatchOptions): Promise<void> {
-  // Demo mode doesn't require subscription
-  console.clear();
   console.log(`
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   ██████╗ ██╗   ██╗██████╗ ███████╗██████╗ ██║  ██╗ █████╗  ██████╗ ║
-║  ██╔═══██╗██║   ██║██╔══██╗██╔════╝██╔══██╗██║  ██║██╔══██╗██╔════╝ ║
-║  ██║   ██║██║   ██║██████╔╝█████╗  ██████╔╝███████║███████║██║  ███╗║
-║  ██║   ██║██║   ██║██╔══██╗██╔══╝  ██╔══██╗██╔══██║██╔══██║██║   ██║║
-║  ╚██████╔╝╚██████╔╝██║  ██║███████╗██║  ██║██║  ██║██║  ██║╚██████╔╝║
-║   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ║
-║                                                                   ║
-║                    <<< TERMINAL ALERTS FOR NEON ALPHA >>>          ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                         ║
+║                    <<< ALPHA-TERM DEMO MODE >>>                         ║
+║                                                                         ║
+╚═══════════════════════════════════════════════════════════════════════════╝
 `);
 
   console.log("📢 Demo Mode - Showing sample alert\n");
@@ -131,14 +132,13 @@ async function runWatchDemo(options: WatchOptions): Promise<void> {
   console.log("─".repeat(75));
   console.log("🚀 $BTC showing strong momentum. Accumulation phase continuing. Watch for");
   console.log("breakout above $76K. The bull run is just getting started. #bitcoin #crypto");
-  console.log("🔗 https://twitter.com/elonmusk/status/1234567890\n");
+  console.log("");
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("To use alpha-term for real:");
   console.log("  1. Subscribe to Pro or Elite at https://neonalpha.me");
   console.log("  2. Run 'alpha-term login YOUR_API_KEY'");
-  console.log("  3. Run 'alpha-term add @elonmusk'");
-  console.log("  4. Run 'alpha-term watch'");
+  console.log("  3. Run 'alpha-term watch'");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 }
 
@@ -151,13 +151,8 @@ function displayAlert(alert: Alert, options: WatchOptions): void {
   // Save to file
   const saveFile = options.save || api.getConfig().saveToFile;
   if (saveFile) {
-    const line = JSON.stringify({
-      id: alert.id,
-      text: alert.text,
-      handle: alert.handle,
-      timestamp: alert.timestamp,
-      url: alert.url,
-    }) + "\n";
+    const timestamp = formatTimestamp(alert.created_at);
+    const line = `--- @${alert.author_handle} | ${timestamp} ---\n${alert.tweet_text}\nID: ${alert.id}\n\n`;
     fs.appendFileSync(saveFile, line);
   }
 
@@ -165,17 +160,17 @@ function displayAlert(alert: Alert, options: WatchOptions): void {
   if (options.json) {
     console.log(JSON.stringify(alert, null, 2));
   } else {
-    const timestamp = format(new Date(alert.timestamp), "MMM d, yyyy HH:mm:ss");
+    const timestamp = formatTimestamp(alert.created_at);
     const icon = options.sound ? "🔔" : "📢";
-    
-    console.log(`${icon} ${alert.handle} ${timestamp}`);
+
+    console.log(`${icon} @${alert.author_handle} ${timestamp}`);
     console.log("─".repeat(75));
-    
+
     // Word wrap text at 75 chars
     const maxWidth = 75;
-    const words = alert.text.split(" ");
+    const words = alert.tweet_text.split(" ");
     let line = "";
-    
+
     for (const word of words) {
       if ((line + " " + word).trim().length > maxWidth) {
         console.log(line);
@@ -184,8 +179,17 @@ function displayAlert(alert: Alert, options: WatchOptions): void {
         line = line ? line + " " + word : word;
       }
     }
-    console.log(line);
-    
-    console.log(`🔗 ${alert.url}\n`);
+    if (line) {
+      console.log(line);
+    }
+    console.log("");
+  }
+}
+
+function formatTimestamp(createdAt: string): string {
+  try {
+    return format(new Date(createdAt), "MMM d, yyyy HH:mm:ss");
+  } catch {
+    return createdAt;
   }
 }

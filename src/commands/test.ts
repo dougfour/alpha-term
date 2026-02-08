@@ -25,7 +25,6 @@ export async function testCommand(): Promise<void> {
   // Show current config
   const config = api.getConfig();
   console.log("Current config:");
-  console.log(`  Monitors: ${config.monitors.length}`);
   console.log(`  Sound: ${config.soundEnabled ? "on" : "off"}`);
   console.log(`  Poll interval: ${config.pollInterval / 1000}s`);
   console.log(`  Save to file: ${config.saveToFile || "not set"}\n`);
@@ -33,21 +32,24 @@ export async function testCommand(): Promise<void> {
   // Display demo tweet
   const demoAlert: Alert = {
     id: "demo-1234567890",
-    text: "🚀 $BTC showing strong momentum. Accumulation phase continuing. Watch for breakout above $76K. The bull run is just getting started. #bitcoin #crypto",
-    handle: "@elonmusk",
-    timestamp: Date.now(),
-    url: "https://twitter.com/elonmusk/status/1234567890",
+    monitor_id: "demo-monitor",
+    tweet_id: "1234567890",
+    tweet_text: "🚀 $BTC showing strong momentum. Accumulation phase continuing. Watch for breakout above $76K. The bull run is just getting started. #bitcoin #crypto",
+    author_handle: "elonmusk",
+    author_name: "Elon Musk",
+    author_avatar: "",
+    created_at: new Date().toISOString(),
   };
 
   console.log("📢 Demo tweet preview:\n");
-  console.log(`🔔 ${demoAlert.handle} ${format(new Date(demoAlert.timestamp), "MMM d, yyyy HH:mm:ss")}`);
+  console.log(`🔔 @${demoAlert.author_handle} ${format(new Date(demoAlert.created_at), "MMM d, yyyy HH:mm:ss")}`);
   console.log("─".repeat(75));
-  
+
   // Word wrap
   const maxWidth = 75;
-  const words = demoAlert.text.split(" ");
+  const words = demoAlert.tweet_text.split(" ");
   let line = "";
-  
+
   for (const word of words) {
     if ((line + " " + word).trim().length > maxWidth) {
       console.log(line);
@@ -57,7 +59,7 @@ export async function testCommand(): Promise<void> {
     }
   }
   console.log(line);
-  console.log(`🔗 ${demoAlert.url}\n`);
+  console.log("");
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("✅ Test complete! alpha-term CLI is working correctly.");

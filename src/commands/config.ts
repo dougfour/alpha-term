@@ -74,11 +74,9 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
   // Display all config
   const config = api.getConfig();
   console.log("Current configuration:");
-  console.log("  API URL: " + config.apiUrl);
   console.log("  Sound alerts: " + (config.soundEnabled ? "enabled" : "disabled"));
   console.log("  Poll interval: " + (config.pollInterval / 1000) + " seconds");
   console.log("  Auto-save file: " + (config.saveToFile || "not set"));
-  console.log("  Monitors: " + config.monitors.length);
   console.log("\nTo change:");
   console.log("  alpha-term config --set sound true");
   console.log("  alpha-term config --set poll 10");
