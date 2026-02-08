@@ -26,39 +26,42 @@ const isLoggedIn = () => {
 
 // Show welcome message for new users
 const showWelcome = () => {
-  console.log(`
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   <<< WELCOME TO ALPHA-TERM >>>                                  ║
-║                                                                   ║
-║   Terminal alerts for NeonAlpha - Monitor tweets in real-time     ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+  console.log(`\x1b[92m
+╔━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╗
+║                                                                        ║
+║\x1b[93m  ___   _     ______ _   _   ___     _____ ______________  ___          \x1b[0m\x1b[92m║
+║\x1b[93m / _ \\ | |    | ___ \\ | | | / _ \\   |_   _|  ___| ___ \\  \\/  |         \x1b[0m\x1b[92m║
+║\x1b[93m/ /_\\ \\| |    | |_/ / |_| |/ /_\\ \\    | | | |__ | |_/ / .  . |         \x1b[0m\x1b[92m║
+║\x1b[93m|  _  || |    |  __/|  _  ||  _  |    | | |  __||    /| |\\/| |         \x1b[0m\x1b[92m║
+║\x1b[93m| | | || |____| |   | | | || | | |    | | | |___| |\\ \\ |  | |         \x1b[0m\x1b[92m║
+║\x1b[93m\\_| |_/\\_____/\\_|   \\_| |_/\\_| |_/    \\_/ \\____/\\_| \\_\\_|  |_/         \x1b[0m\x1b[92m║
+║                                                                        ║
+║\x1b[95m  <<< TERMINAL ALERTS FOR NEON ALPHA >>>                                \x1b[0m\x1b[92m║
+║                                                                        ║
+╚━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╝
+\x1b[0m`);
 
-🚀 GETTING STARTED:
+  console.log(`\x1b[93mGETTING STARTED:\x1b[0m
 
-   1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Run: alpha-term login
-   3. Run: alpha-term watch
+   1. Subscribe at \x1b[96mhttps://neonalpha.me\x1b[0m (Pro or Elite)
+   2. Run: \x1b[92malpha-term login\x1b[0m
+   3. Run: \x1b[92malpha-term watch\x1b[0m
 
-⚠️  NOT LOGGED IN
+\x1b[91mNOT LOGGED IN\x1b[0m
 
-   Subscribe: https://neonalpha.me/pricing
-   Docs: https://neonalpha.me/docs
-
+   Subscribe: \x1b[96mhttps://neonalpha.me/pricing\x1b[0m
 `);
 };
 
 // Show login prompt when not logged in
 const showLoginPrompt = () => {
   console.log(`
-⚠️  NOT LOGGED IN
+\x1b[91mNOT LOGGED IN\x1b[0m
 
    You need to login first.
 
-   1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Run: alpha-term login
-
+   1. Subscribe at \x1b[96mhttps://neonalpha.me\x1b[0m (Pro or Elite)
+   2. Run: \x1b[92malpha-term login\x1b[0m
 `);
 };
 
