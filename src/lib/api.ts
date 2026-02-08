@@ -1,15 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const API_URL = process.env.ALPHA_TERM_API_URL || "https://api.neonalpha.me/api/v1";
 const CONFIG_DIR = path.join(process.env.HOME || "", ".alpha-term");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const TOKEN_FILE = path.join(CONFIG_DIR, "token");
+
+interface TokenData {
+  access_token: string;
+  refresh_token?: string;
+}
 
 export interface Config {
   pollInterval: number;
@@ -45,10 +46,11 @@ export interface SubscriptionStatus {
 class NeonAlphaClient {
   private client: AxiosInstance;
   private config: Config;
+  private isRefreshing = false;
 
   constructor() {
     this.config = this.loadConfig();
-    
+
     this.client = axios.create({
       baseURL: API_URL,
       timeout: 30000,
@@ -59,12 +61,38 @@ class NeonAlphaClient {
 
     // Add auth interceptor
     this.client.interceptors.request.use(async (config) => {
-      const token = await this.loadToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      const tokens = this.loadTokens();
+      if (tokens?.access_token) {
+        config.headers.Authorization = `Bearer ${tokens.access_token}`;
       }
       return config;
     });
+
+    // Add 401 response interceptor for auto-refresh
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        const originalRequest = error.config as any;
+
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !this.isRefreshing
+        ) {
+          originalRequest._retry = true;
+          const refreshed = await this.refreshAccessToken();
+          if (refreshed) {
+            const tokens = this.loadTokens();
+            if (tokens?.access_token) {
+              originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
+            }
+            return this.client(originalRequest);
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
   }
 
   private loadConfig(): Config {
@@ -89,20 +117,69 @@ class NeonAlphaClient {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.config, null, 2));
   }
 
-  async loadToken(): Promise<string | null> {
+  loadTokens(): TokenData | null {
     if (!fs.existsSync(TOKEN_FILE)) {
       return null;
     }
-    return fs.readFileSync(TOKEN_FILE, "utf-8").trim();
+    const raw = fs.readFileSync(TOKEN_FILE, "utf-8").trim();
+    if (!raw) return null;
+
+    // Support both JSON format and raw token string
+    try {
+      return JSON.parse(raw) as TokenData;
+    } catch {
+      // Legacy: raw token string (no refresh token)
+      return { access_token: raw };
+    }
+  }
+
+  // Keep for backwards compat with login command
+  async loadToken(): Promise<string | null> {
+    const tokens = this.loadTokens();
+    return tokens?.access_token || null;
   }
 
   async saveToken(token: string): Promise<void> {
-    fs.writeFileSync(TOKEN_FILE, token);
+    // If it looks like a JWT, save as JSON with just access_token
+    this.saveTokens({ access_token: token });
+  }
+
+  saveTokens(tokens: TokenData): void {
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
+  }
+
+  private async refreshAccessToken(): Promise<boolean> {
+    const tokens = this.loadTokens();
+    if (!tokens?.refresh_token) {
+      return false;
+    }
+
+    this.isRefreshing = true;
+    try {
+      // Use raw axios to avoid the interceptor loop
+      const response = await axios.post(`${API_URL}/auth/refresh`, {
+        refresh_token: tokens.refresh_token,
+      });
+
+      const { access_token, refresh_token } = response.data;
+      this.saveTokens({
+        access_token,
+        refresh_token: refresh_token || tokens.refresh_token,
+      });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   async validateSubscription(): Promise<SubscriptionStatus> {
-    const token = await this.loadToken();
-    if (!token) {
+    const tokens = this.loadTokens();
+    if (!tokens?.access_token) {
       return {
         valid: false,
         tier: null,
@@ -132,7 +209,7 @@ class NeonAlphaClient {
         return {
           valid: false,
           tier: null,
-          error: "Invalid or expired API key. Get a new one at:\nhttps://neonalpha.me/dashboard/settings/api-keys",
+          error: "Invalid or expired token. Run 'alpha-term login' again.\nhttps://neonalpha.me/dashboard/settings/api-keys",
         };
       }
       return {

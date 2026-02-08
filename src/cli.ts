@@ -11,7 +11,17 @@ const VERSION = "{{VERSION}}";
 const isLoggedIn = () => {
   const configDir = join(process.env.HOME || "", ".alpha-term");
   const tokenFile = join(configDir, "token");
-  return existsSync(tokenFile);
+  if (!existsSync(tokenFile)) return false;
+  const content = readFileSync(tokenFile, "utf-8").trim();
+  if (!content) return false;
+  // Check JSON format
+  try {
+    const data = JSON.parse(content);
+    return !!data.access_token;
+  } catch {
+    // Legacy raw token format
+    return content.length > 10;
+  }
 };
 
 // Show welcome message for new users
@@ -28,17 +38,14 @@ const showWelcome = () => {
 🚀 GETTING STARTED:
 
    1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Get your API key from https://neonalpha.me/dashboard
-   3. Run: alpha-term login YOUR_API_KEY
-   4. Run: alpha-term add @elonmusk
-   5. Run: alpha-term watch
+   2. Login at https://neonalpha.me, then open DevTools:
+      Application > Local Storage > copy access_token & refresh_token
+   3. Run: alpha-term login ACCESS_TOKEN --refresh REFRESH_TOKEN
+   4. Run: alpha-term watch
 
 ⚠️  NOT LOGGED IN
 
-   To use alpha-term, you need to subscribe first.
-
    Subscribe: https://neonalpha.me/pricing
-   Get API Key: https://neonalpha.me/dashboard/settings/api-keys
    Docs: https://neonalpha.me/docs
 
 `);
@@ -49,12 +56,11 @@ const showLoginPrompt = () => {
   console.log(`
 ⚠️  NOT LOGGED IN
 
-   You need to login with your API key first.
+   You need to login first.
 
    1. Subscribe at https://neonalpha.me (Pro or Elite)
-   2. Get your API key from:
-      https://neonalpha.me/dashboard/settings/api-keys
-   3. Run: alpha-term login YOUR_API_KEY
+   2. Login, then DevTools > Application > Local Storage
+   3. Run: alpha-term login ACCESS_TOKEN --refresh REFRESH_TOKEN
 
 `);
 };
@@ -97,7 +103,7 @@ if (!isLoggedIn() && !noAuthCommands.includes(command)) {
 }
 
 import { watchCommand } from "./commands/watch.js";
-import { loginCommand } from "./commands/login.js";
+import { loginCommand, loginWithTokens } from "./commands/login.js";
 import { listCommand } from "./commands/list.js";
 import { addCommand } from "./commands/add.js";
 import { removeCommand } from "./commands/remove.js";
@@ -129,9 +135,14 @@ program
 // Authentication
 program
   .command("login [apiKey]")
-  .description("Login with your NeonAlpha API key")
-  .action(async (apiKey) => {
-    await loginCommand(apiKey);
+  .description("Login with your NeonAlpha access token")
+  .option("-r, --refresh <token>", "Refresh token for auto-renewal (recommended)")
+  .action(async (apiKey, options) => {
+    if (apiKey && options.refresh) {
+      await loginWithTokens(apiKey, options.refresh);
+    } else {
+      await loginCommand(apiKey);
+    }
   });
 
 // Monitor management
