@@ -106,7 +106,11 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           console.log(`✓ Got ${newAlerts.length} new tweet(s)\n`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        console.log("\n⚠️  Session expired. Please run 'alpha-term login' to sign in again.\n");
+        process.exit(1);
+      }
       console.error("Error fetching alerts:", error instanceof Error ? error.message : "Unknown error");
     }
   };

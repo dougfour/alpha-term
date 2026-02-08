@@ -14,6 +14,39 @@ function prompt(question: string): Promise<string> {
   });
 }
 
+function promptPassword(question: string): Promise<string> {
+  return new Promise<string>((resolve) => {
+    process.stdout.write(question);
+    const stdin = process.stdin;
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding("utf8");
+
+    let password = "";
+    const onData = (char: string) => {
+      if (char === "\n" || char === "\r" || char === "\u0004") {
+        stdin.setRawMode(false);
+        stdin.pause();
+        stdin.removeListener("data", onData);
+        process.stdout.write("\n");
+        resolve(password);
+      } else if (char === "\u0003") {
+        // Ctrl+C
+        stdin.setRawMode(false);
+        process.exit();
+      } else if (char === "\u007F" || char === "\b") {
+        // Backspace
+        if (password.length > 0) {
+          password = password.slice(0, -1);
+        }
+      } else {
+        password += char;
+      }
+    };
+    stdin.on("data", onData);
+  });
+}
+
 export async function loginCommand(apiKey?: string): Promise<void> {
   console.log("\n🔐 NeonAlpha CLI Login\n");
 
@@ -38,8 +71,7 @@ export async function loginCommand(apiKey?: string): Promise<void> {
     return;
   }
 
-  // Password input (note: visible in terminal - readline limitation)
-  const password = await prompt("Password: ");
+  const password = await promptPassword("Password: ");
   if (!password) {
     console.log("❌ No password provided.\n");
     return;

@@ -209,7 +209,7 @@ class NeonAlphaClient {
         return {
           valid: false,
           tier: null,
-          error: "Invalid or expired token. Run 'alpha-term login' again.\nhttps://neonalpha.me/dashboard/settings/api-keys",
+          error: "Session expired. Please run 'alpha-term login' to sign in again.",
         };
       }
       return {

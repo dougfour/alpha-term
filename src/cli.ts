@@ -93,7 +93,7 @@ if (process.argv.length <= 2 && !isLoggedIn()) {
 
 // Show login prompt for any command if not logged in
 const command = process.argv[2] || "";
-const noAuthCommands = ["--version", "-V", "--help", "-h", "--test", "login"];
+const noAuthCommands = ["--version", "-V", "--help", "-h", "--test", "login", "logout"];
 if (!isLoggedIn() && !noAuthCommands.includes(command)) {
   showLoginPrompt();
   process.exit(0);
@@ -101,6 +101,7 @@ if (!isLoggedIn() && !noAuthCommands.includes(command)) {
 
 import { watchCommand } from "./commands/watch.js";
 import { loginCommand } from "./commands/login.js";
+import { logoutCommand } from "./commands/logout.js";
 import { listCommand } from "./commands/list.js";
 import { addCommand } from "./commands/add.js";
 import { removeCommand } from "./commands/remove.js";
@@ -135,6 +136,13 @@ program
   .description("Login with your NeonAlpha email and password")
   .action(async () => {
     await loginCommand();
+  });
+
+program
+  .command("logout")
+  .description("Log out of alpha-term")
+  .action(async () => {
+    await logoutCommand();
   });
 
 // Monitor management
