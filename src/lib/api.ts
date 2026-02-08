@@ -6,12 +6,12 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const API_URL = process.env.ALPHA_TERM_API_URL || "https://api.neonalpha.me/api/v1";
 const CONFIG_DIR = path.join(process.env.HOME || "", ".alpha-term");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const TOKEN_FILE = path.join(CONFIG_DIR, "token");
 
 export interface Config {
-  apiUrl: string;
   pollInterval: number;
   soundEnabled: boolean;
   saveToFile?: string;
@@ -47,7 +47,7 @@ class NeonAlphaClient {
     this.config = this.loadConfig();
     
     this.client = axios.create({
-      baseURL: this.config.apiUrl,
+      baseURL: API_URL,
       timeout: 30000,
       headers: {
         "Content-Type": "application/json",
@@ -71,7 +71,6 @@ class NeonAlphaClient {
 
     if (!fs.existsSync(CONFIG_FILE)) {
       const defaultConfig: Config = {
-        apiUrl: "https://api.neonalpha.me/api/v1",
         pollInterval: 30000, // 30 seconds
         soundEnabled: false,
         monitors: [],
