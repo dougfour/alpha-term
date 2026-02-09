@@ -9,6 +9,31 @@ const RED = "\x1b[91m";
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
 const MAGENTA = "\x1b[95m";
+const DIM = "\x1b[2m";
+const CLEAR_LINE = "\x1b[2K";
+const WHITE = "\x1b[97m";
+
+// Neon palette for author color-cycling
+const NEON_PALETTE = [
+  "\x1b[96m", // bright cyan
+  "\x1b[95m", // bright magenta
+  "\x1b[93m", // bright yellow
+  "\x1b[92m", // bright green
+  "\x1b[91m", // bright red
+  "\x1b[94m", // bright blue
+];
+const handleColorMap = new Map<string, string>();
+let paletteIndex = 0;
+
+function getAuthorColor(handle: string): string {
+  let color = handleColorMap.get(handle);
+  if (!color) {
+    color = NEON_PALETTE[paletteIndex % NEON_PALETTE.length];
+    handleColorMap.set(handle, color);
+    paletteIndex++;
+  }
+  return color;
+}
 
 // Box drawing
 const BOX_TL = "┌", BOX_TR = "┐", BOX_BL = "└", BOX_BR = "┘";
@@ -102,26 +127,39 @@ function localTimeNow(): string {
   return `${h}:${m}:${s}`;
 }
 
+function colorizeText(text: string): string {
+  return text
+    .replace(/\$[A-Z]{1,10}\b/g, `${YELLOW}${BOLD}$&${RESET}`)
+    .replace(/@\w+/g, `${CYAN}$&${RESET}`)
+    .replace(/#\w+/g, `${MAGENTA}$&${RESET}`);
+}
+
 function renderAlert(alert: Alert, isLast: boolean = true): string {
   const author = alert.author_handle;
+  const displayName = alert.author_name;
   const text = alert.tweet_text;
   const timeStr = formatTime(alert.created_at);
+  const authorColor = getAuthorColor(author);
 
   const bottom = isLast ? BOX_BL : BOX_ML;
   const right = isLast ? BOX_BR : BOX_MR;
 
+  const authorLine = displayName
+    ? `${BOLD}${WHITE}${displayName}${RESET}  ${authorColor}@${author}${RESET}`
+    : `${authorColor}@${author}${RESET}`;
+
   const lines: string[] = [];
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${YELLOW}🔔${RESET}  ${BOLD}${CYAN}@${author}${RESET}`);
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${CYAN}${BOX_H.repeat(30)}${RESET}`);
+  lines.push(`${authorColor}${BOX_V}${RESET}  ${YELLOW}🔔${RESET}  ${authorLine}`);
+  lines.push(`${authorColor}${BOX_V}${RESET}  ${CYAN}${BOX_H.repeat(30)}${RESET}`);
 
   const wrapped = wrapText(text);
   for (const line of wrapped) {
-    lines.push(`${GREEN}${BOX_V}${RESET}  ${line}`);
+    lines.push(`${authorColor}${BOX_V}${RESET}  ${colorizeText(line)}`);
   }
 
-  lines.push(`${GREEN}${BOX_V}${RESET}`);
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${GREEN}*${RESET} ${timeStr}`);
-  lines.push(`${GREEN}${bottom}${BOX_H.repeat(75)}${right}${RESET}`);
+  lines.push(`${authorColor}${BOX_V}${RESET}`);
+  lines.push(`${authorColor}${BOX_V}${RESET}  ${GREEN}*${RESET} ${timeStr}`);
+  lines.push(`${authorColor}${bottom}${BOX_H.repeat(75)}${right}${RESET}`);
 
   return lines.join("\n");
 }
@@ -198,8 +236,9 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
         // Only show alerts we haven't seen before
         const newAlerts = filtered.filter((a) => !shownIds.has(a.id));
 
+        // Clear heartbeat line before printing alerts
         if (newAlerts.length > 0) {
-          console.log(renderNewBanner(newAlerts.length));
+          process.stdout.write(`\r${CLEAR_LINE}`);
         }
 
         // Show oldest first
@@ -218,7 +257,6 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           } else {
             console.log();
             console.log(renderAlert(alert));
-            console.log(`${CYAN}>>> #${tweetCount} | ${localTimeNow()}${RESET}\n`);
           }
         }
 
@@ -226,7 +264,9 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           if (options.sound) {
             process.stdout.write("\x07"); // Terminal bell
           }
-          console.log(`${GREEN}✓ Got ${newAlerts.length} new tweet(s)${RESET}`);
+          console.log(`${GREEN}✓ Got ${newAlerts.length} new tweet(s) · ${tweetCount} total this session${RESET}`);
+        } else {
+          process.stdout.write(`\r${CLEAR_LINE}${DIM}· listening ━━━━━━━━━━ ${localTimeNow()}${RESET}`);
         }
 
         // Prevent unbounded growth of shown IDs
@@ -275,7 +315,6 @@ async function runWatchDemo(options: WatchOptions): Promise<void> {
 
   console.log();
   console.log(renderAlert(demoAlert));
-  console.log(`${CYAN}>>> #1 | ${localTimeNow()}${RESET}\n`);
 
   console.log(`${GREEN}${BOX_H.repeat(55)}${RESET}`);
   console.log(`${YELLOW}To use alpha-term for real:${RESET}`);
