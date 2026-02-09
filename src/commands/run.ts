@@ -25,7 +25,8 @@ export async function runCommand(options: RunOptions): Promise<void> {
     return;
   }
 
-  const limit = options.limit || 20;
+  const config = api.getConfig();
+  const limit = options.limit || config.defaultLimit || 20;
 
   try {
     const alerts = await api.getAlerts(limit);

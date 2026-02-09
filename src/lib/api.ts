@@ -15,6 +15,7 @@ interface TokenData {
 export interface Config {
   soundEnabled: boolean;
   saveToFile?: string;
+  defaultLimit?: number;
 }
 
 export interface Alert {

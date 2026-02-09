@@ -67,6 +67,11 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 
   console.log(`${GREEN}${subscription.tier?.toUpperCase()}${RESET} subscription validated\n`);
 
+  // Merge config defaults with CLI flags
+  const config = api.getConfig();
+  const useSound = options.sound || config.soundEnabled;
+  const saveFile = options.save || config.saveToFile;
+
   // Display banner
   printBanner();
 
@@ -119,9 +124,9 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
           shownIds.add(alert.id);
 
           // Save to file if requested
-          if (options.save) {
+          if (saveFile) {
             const line = `--- @${alert.author_handle} | ${formatDateTime(alert.created_at)} ---\n${alert.tweet_text}\nID: ${alert.id}\n\n`;
-            fs.appendFileSync(options.save, line);
+            fs.appendFileSync(saveFile, line);
           }
 
           if (options.json) {
@@ -133,7 +138,7 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
         }
 
         if (newAlerts.length > 0) {
-          if (options.sound) {
+          if (useSound) {
             process.stdout.write("\x07"); // Terminal bell
           }
           console.log(`${GREEN}✓ Got ${newAlerts.length} new tweet(s) · ${tweetCount} total this session${RESET}`);

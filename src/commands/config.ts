@@ -1,76 +1,90 @@
 import { api } from "../lib/api.js";
+import { GREEN, CYAN, YELLOW, RED, RESET, DIM } from "../lib/render.js";
 
-const GREEN = "\x1b[92m";
-const CYAN = "\x1b[96m";
-const YELLOW = "\x1b[93m";
-const RED = "\x1b[91m";
-const RESET = "\x1b[0m";
-
-interface ConfigOptions {
-  set?: string;
-  get?: string;
-  reset?: boolean;
-}
-
-export async function configCommand(options: ConfigOptions): Promise<void> {
+export async function configCommand(key?: string, value?: string, options?: { reset?: boolean }): Promise<void> {
   console.log(`\n${CYAN}Alpha-Term Configuration${RESET}\n`);
 
   // Reset config
-  if (options.reset) {
+  if (key === "reset" || options?.reset) {
     api.updateConfig({
       soundEnabled: false,
       saveToFile: undefined,
+      defaultLimit: undefined,
     });
     console.log(`${GREEN}Configuration reset to defaults.${RESET}\n`);
     return;
   }
 
-  // Get config value
-  if (options.get) {
+  // No key — show current config
+  if (!key) {
     const config = api.getConfig();
-    const value = (config as any)[options.get as keyof typeof config];
-    console.log("  " + options.get + ": " + (value !== undefined ? value : "not set") + "\n");
+    console.log(`  Sound alerts:   ${config.soundEnabled ? GREEN + "on" + RESET : DIM + "off" + RESET}`);
+    console.log(`  Auto-save:      ${config.saveToFile ? GREEN + config.saveToFile + RESET : DIM + "off" + RESET}`);
+    console.log(`  Alert limit:    ${config.defaultLimit ? GREEN + config.defaultLimit + RESET : DIM + "20 (default)" + RESET}`);
+    console.log();
+    console.log(`  ${DIM}Examples:${RESET}`);
+    console.log(`    ${GREEN}alpha-term config sound on${RESET}`);
+    console.log(`    ${GREEN}alpha-term config save tweets.txt${RESET}`);
+    console.log(`    ${GREEN}alpha-term config limit 50${RESET}`);
+    console.log(`    ${GREEN}alpha-term config reset${RESET}`);
+    console.log();
     return;
   }
 
-  // Set config value
-  if (options.set) {
-    const [key, value] = options.set.split(" ");
-
-    if (!key || value === undefined) {
-      console.log(`${RED}Usage: alpha-term config --set <key> <value>${RESET}\n`);
+  switch (key) {
+    case "sound": {
+      if (!value || !["on", "off"].includes(value)) {
+        console.log(`${RED}Usage: alpha-term config sound on|off${RESET}\n`);
+        return;
+      }
+      const enabled = value === "on";
+      api.updateConfig({ soundEnabled: enabled });
+      console.log(`${GREEN}Sound alerts: ${enabled ? "on" : "off"}${RESET}\n`);
       return;
     }
 
-    const updates: Record<string, any> = {};
-
-    switch (key) {
-      case "sound":
-        updates.soundEnabled = value === "true" || value === "on";
-        break;
-      case "save":
-        updates.saveToFile = value;
-        break;
-      default:
-        console.log(`${RED}Unknown config option: ${key}${RESET}`);
-        console.log(`\nAvailable options:`);
-        console.log(`  ${GREEN}sound${RESET} <true|false>  - Enable/disable sound alerts`);
-        console.log(`  ${GREEN}save${RESET} <file>         - Set auto-save file\n`);
+    case "save": {
+      if (!value) {
+        console.log(`${RED}Usage: alpha-term config save <file>|off${RESET}\n`);
         return;
+      }
+      if (value === "off") {
+        api.updateConfig({ saveToFile: undefined });
+        console.log(`${GREEN}Auto-save: off${RESET}\n`);
+      } else {
+        api.updateConfig({ saveToFile: value });
+        console.log(`${GREEN}Auto-save: ${value}${RESET}\n`);
+      }
+      return;
     }
 
-    api.updateConfig(updates);
-    console.log(`${GREEN}${key} set to: ${value}${RESET}\n`);
-    return;
-  }
+    case "limit": {
+      if (!value) {
+        console.log(`${RED}Usage: alpha-term config limit <number>|off${RESET}\n`);
+        return;
+      }
+      if (value === "off") {
+        api.updateConfig({ defaultLimit: undefined });
+        console.log(`${GREEN}Alert limit: 20 (default)${RESET}\n`);
+      } else {
+        const num = parseInt(value, 10);
+        if (isNaN(num) || num < 1 || num > 50) {
+          console.log(`${RED}Limit must be a number between 1 and 50.${RESET}\n`);
+          return;
+        }
+        api.updateConfig({ defaultLimit: num });
+        console.log(`${GREEN}Alert limit: ${num}${RESET}\n`);
+      }
+      return;
+    }
 
-  // Display all config
-  const config = api.getConfig();
-  console.log("Current configuration:");
-  console.log(`  Sound alerts: ${config.soundEnabled ? "enabled" : "disabled"}`);
-  console.log(`  Auto-save file: ${config.saveToFile || "not set"}`);
-  console.log(`\nTo change:`);
-  console.log(`  ${GREEN}alpha-term config --set sound true${RESET}`);
-  console.log(`  ${GREEN}alpha-term config --set save tweets.json${RESET}`);
-  console.log(`  ${GREEN}alpha-term config --reset${RESET}\n`);
+    default:
+      console.log(`${RED}Unknown setting: ${key}${RESET}\n`);
+      console.log(`  Available settings:`);
+      console.log(`    ${GREEN}sound${RESET} on|off        Enable/disable sound alerts`);
+      console.log(`    ${GREEN}save${RESET}  <file>|off    Auto-save tweets to file`);
+      console.log(`    ${GREEN}limit${RESET} <number>|off  Default alert count for 'run'`);
+      console.log(`    ${GREEN}reset${RESET}               Reset all to defaults`);
+      console.log();
+  }
 }

@@ -155,13 +155,11 @@ program
 
 // Configuration
 program
-  .command("config")
-  .description("Configure alpha-term settings")
-  .option("--set <key> <value>", "Set a config value")
-  .option("--get <key>", "Get a config value")
+  .command("config [key] [value]")
+  .description("View or change settings (sound, save, limit)")
   .option("--reset", "Reset all config to defaults")
-  .action(async (options) => {
-    await configCommand(options);
+  .action(async (key, value, options) => {
+    await configCommand(key, value, options);
   });
 
 // Update
