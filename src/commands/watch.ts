@@ -1,44 +1,10 @@
 import { Alert, api } from "../lib/api.js";
+import {
+  GREEN, CYAN, YELLOW, RED, RESET, DIM, CLEAR_LINE,
+  BOX_H,
+  renderAlert, printBanner,
+} from "../lib/render.js";
 import * as fs from "fs";
-
-// ANSI colors
-const GREEN = "\x1b[92m";
-const CYAN = "\x1b[96m";
-const YELLOW = "\x1b[93m";
-const RED = "\x1b[91m";
-const RESET = "\x1b[0m";
-const BOLD = "\x1b[1m";
-const MAGENTA = "\x1b[95m";
-const DIM = "\x1b[2m";
-const CLEAR_LINE = "\x1b[2K";
-const WHITE = "\x1b[97m";
-
-// Neon palette for author color-cycling
-const NEON_PALETTE = [
-  "\x1b[96m", // bright cyan
-  "\x1b[95m", // bright magenta
-  "\x1b[93m", // bright yellow
-  "\x1b[92m", // bright green
-  "\x1b[91m", // bright red
-  "\x1b[94m", // bright blue
-];
-const handleColorMap = new Map<string, string>();
-let paletteIndex = 0;
-
-function getAuthorColor(handle: string): string {
-  let color = handleColorMap.get(handle);
-  if (!color) {
-    color = NEON_PALETTE[paletteIndex % NEON_PALETTE.length];
-    handleColorMap.set(handle, color);
-    paletteIndex++;
-  }
-  return color;
-}
-
-// Box drawing
-const BOX_TL = "┌", BOX_TR = "┐", BOX_BL = "└", BOX_BR = "┘";
-const BOX_H = "─", BOX_V = "│";
-const BOX_ML = "├", BOX_MR = "┤";
 
 interface WatchOptions {
   sound?: boolean;
@@ -47,54 +13,6 @@ interface WatchOptions {
   handle?: string;
   json?: boolean;
   test?: boolean;
-}
-
-function printBanner(): void {
-  console.log();
-  console.log(`${CYAN}╔═╗${RESET}  ${CYAN}╦${RESET}    ${CYAN}╔═╗${RESET}  ${CYAN}╦ ╦${RESET}  ${CYAN}╔═╗${RESET}    ${YELLOW}═╦═${RESET}  ${YELLOW}╔═╗${RESET}  ${YELLOW}╦═╗${RESET}  ${YELLOW}╔╦╗${RESET}`);
-  console.log(`${CYAN}╠═╣${RESET}  ${CYAN}║${RESET}    ${CYAN}╠═╝${RESET}  ${CYAN}╠═╣${RESET}  ${CYAN}╠═╣${RESET}     ${YELLOW}║${RESET}   ${YELLOW}╠═${RESET}   ${YELLOW}╠╦╝${RESET}  ${YELLOW}║║║${RESET}`);
-  console.log(`${CYAN}╩ ╩${RESET}  ${CYAN}╩═╝${RESET}  ${CYAN}╩${RESET}    ${CYAN}╩ ╩${RESET}  ${CYAN}╩ ╩${RESET}     ${YELLOW}╩${RESET}   ${YELLOW}╚═╝${RESET}  ${YELLOW}╩╚═${RESET}  ${YELLOW}╩ ╩${RESET}`);
-  console.log(`${GREEN}══════════════════════════════════════════════════${RESET}`);
-  console.log(`${MAGENTA}       <<< NEON ALPHA TERMINAL ALERTS >>>${RESET}`);
-  console.log();
-}
-
-function wrapText(text: string, width: number = 60): string[] {
-  const lines: string[] = [];
-  for (const paragraph of text.split("\n")) {
-    const words = paragraph.split(" ");
-    let current = "";
-    for (const word of words) {
-      if (current.length + word.length + 1 <= width) {
-        current += (current ? " " : "") + word;
-      } else {
-        if (current) lines.push(current);
-        current = word;
-      }
-    }
-    if (current) lines.push(current);
-  }
-  return lines;
-}
-
-function formatTime(createdAt: string): string {
-  try {
-    // Ensure timestamp is parsed as UTC
-    let isoStr = createdAt;
-    if (!isoStr.endsWith("Z") && !isoStr.includes("+")) {
-      isoStr += "Z";
-    }
-    const dt = new Date(isoStr);
-    const hours = dt.getHours().toString().padStart(2, "0");
-    const minutes = dt.getMinutes().toString().padStart(2, "0");
-    const seconds = dt.getSeconds().toString().padStart(2, "0");
-    const tzName = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
-      .formatToParts(dt)
-      .find((p) => p.type === "timeZoneName")?.value || "";
-    return `${hours}:${minutes}:${seconds} ${tzName}`;
-  } catch {
-    return createdAt;
-  }
 }
 
 function formatDateTime(createdAt: string): string {
@@ -125,52 +43,6 @@ function localTimeNow(): string {
   const m = dt.getMinutes().toString().padStart(2, "0");
   const s = dt.getSeconds().toString().padStart(2, "0");
   return `${h}:${m}:${s}`;
-}
-
-function colorizeText(text: string): string {
-  return text
-    .replace(/\$[A-Z]{1,10}\b/g, `${YELLOW}${BOLD}$&${RESET}`)
-    .replace(/@\w+/g, `${CYAN}$&${RESET}`)
-    .replace(/#\w+/g, `${MAGENTA}$&${RESET}`);
-}
-
-function renderAlert(alert: Alert, isLast: boolean = true): string {
-  const author = alert.author_handle;
-  const displayName = alert.author_name;
-  const text = alert.tweet_text;
-  const timeStr = formatTime(alert.created_at);
-  const authorColor = getAuthorColor(author);
-
-  const bottom = isLast ? BOX_BL : BOX_ML;
-  const right = isLast ? BOX_BR : BOX_MR;
-
-  const authorLine = displayName
-    ? `${BOLD}${WHITE}${displayName}${RESET}  ${authorColor}@${author}${RESET}`
-    : `${authorColor}@${author}${RESET}`;
-
-  const lines: string[] = [];
-  lines.push(`${authorColor}${BOX_V}${RESET}  ${YELLOW}🔔${RESET}  ${authorLine}`);
-  lines.push(`${authorColor}${BOX_V}${RESET}  ${CYAN}${BOX_H.repeat(30)}${RESET}`);
-
-  const wrapped = wrapText(text);
-  for (const line of wrapped) {
-    lines.push(`${authorColor}${BOX_V}${RESET}  ${colorizeText(line)}`);
-  }
-
-  lines.push(`${authorColor}${BOX_V}${RESET}`);
-  lines.push(`${authorColor}${BOX_V}${RESET}  ${GREEN}*${RESET} ${timeStr}`);
-  lines.push(`${authorColor}${bottom}${BOX_H.repeat(75)}${right}${RESET}`);
-
-  return lines.join("\n");
-}
-
-function renderNewBanner(count: number): string {
-  if (count === 0) return "";
-  const lines: string[] = [];
-  lines.push(`\n${YELLOW}${BOX_TL}${BOX_H.repeat(6)} >> NEW ALERTS >> ${BOX_H.repeat(6)}${BOX_TR}`);
-  lines.push(`${BOX_V}  ${count} new tweet(s) since last refresh  ${BOX_V}`);
-  lines.push(`${BOX_BL}${BOX_H.repeat(34)}${BOX_BR}${RESET}\n`);
-  return lines.join("\n");
 }
 
 export async function watchCommand(options: WatchOptions): Promise<void> {

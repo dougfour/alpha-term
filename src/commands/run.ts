@@ -1,103 +1,15 @@
-import { Alert, api } from "../lib/api.js";
-
-// ANSI colors
-const GREEN = "\x1b[92m";
-const CYAN = "\x1b[96m";
-const YELLOW = "\x1b[93m";
-const RED = "\x1b[91m";
-const RESET = "\x1b[0m";
-const BOLD = "\x1b[1m";
-const MAGENTA = "\x1b[95m";
-
-// Box drawing
-const BOX_TL = "┌", BOX_TR = "┐", BOX_BL = "└", BOX_BR = "┘";
-const BOX_H = "─", BOX_V = "│";
-const BOX_ML = "├", BOX_MR = "┤";
+import { api } from "../lib/api.js";
+import {
+  GREEN, CYAN, YELLOW, RED, RESET,
+  BOX_H,
+  renderAlert, printBanner,
+} from "../lib/render.js";
 
 interface RunOptions {
   keyword?: string;
   handle?: string;
   json?: boolean;
   limit?: number;
-}
-
-function printBanner(): void {
-  console.log();
-  console.log(`${CYAN}╔═╗${RESET}  ${CYAN}╦${RESET}    ${CYAN}╔═╗${RESET}  ${CYAN}╦ ╦${RESET}  ${CYAN}╔═╗${RESET}    ${YELLOW}═╦═${RESET}  ${YELLOW}╔═╗${RESET}  ${YELLOW}╦═╗${RESET}  ${YELLOW}╔╦╗${RESET}`);
-  console.log(`${CYAN}╠═╣${RESET}  ${CYAN}║${RESET}    ${CYAN}╠═╝${RESET}  ${CYAN}╠═╣${RESET}  ${CYAN}╠═╣${RESET}     ${YELLOW}║${RESET}   ${YELLOW}╠═${RESET}   ${YELLOW}╠╦╝${RESET}  ${YELLOW}║║║${RESET}`);
-  console.log(`${CYAN}╩ ╩${RESET}  ${CYAN}╩═╝${RESET}  ${CYAN}╩${RESET}    ${CYAN}╩ ╩${RESET}  ${CYAN}╩ ╩${RESET}     ${YELLOW}╩${RESET}   ${YELLOW}╚═╝${RESET}  ${YELLOW}╩╚═${RESET}  ${YELLOW}╩ ╩${RESET}`);
-  console.log(`${GREEN}══════════════════════════════════════════════════${RESET}`);
-  console.log(`${MAGENTA}       <<< NEON ALPHA TERMINAL ALERTS >>>${RESET}`);
-  console.log();
-}
-
-function wrapText(text: string, width: number = 60): string[] {
-  const lines: string[] = [];
-  for (const paragraph of text.split("\n")) {
-    const words = paragraph.split(" ");
-    let current = "";
-    for (const word of words) {
-      if (current.length + word.length + 1 <= width) {
-        current += (current ? " " : "") + word;
-      } else {
-        if (current) lines.push(current);
-        current = word;
-      }
-    }
-    if (current) lines.push(current);
-  }
-  return lines;
-}
-
-function formatTime(createdAt: string): string {
-  try {
-    let isoStr = createdAt;
-    if (!isoStr.endsWith("Z") && !isoStr.includes("+")) {
-      isoStr += "Z";
-    }
-    const dt = new Date(isoStr);
-    const hours = dt.getHours().toString().padStart(2, "0");
-    const minutes = dt.getMinutes().toString().padStart(2, "0");
-    const seconds = dt.getSeconds().toString().padStart(2, "0");
-    const tzName = new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
-      .formatToParts(dt)
-      .find((p) => p.type === "timeZoneName")?.value || "";
-    return `${hours}:${minutes}:${seconds} ${tzName}`;
-  } catch {
-    return createdAt;
-  }
-}
-
-function localTimeNow(): string {
-  const dt = new Date();
-  const h = dt.getHours().toString().padStart(2, "0");
-  const m = dt.getMinutes().toString().padStart(2, "0");
-  const s = dt.getSeconds().toString().padStart(2, "0");
-  return `${h}:${m}:${s}`;
-}
-
-function renderAlert(alert: Alert, isLast: boolean): string {
-  const author = alert.author_handle;
-  const text = alert.tweet_text;
-  const timeStr = formatTime(alert.created_at);
-
-  const bottom = isLast ? BOX_BL : BOX_ML;
-  const right = isLast ? BOX_BR : BOX_MR;
-
-  const lines: string[] = [];
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${YELLOW}🔔${RESET}  ${BOLD}${CYAN}@${author}${RESET}`);
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${CYAN}${BOX_H.repeat(30)}${RESET}`);
-
-  const wrapped = wrapText(text);
-  for (const line of wrapped) {
-    lines.push(`${GREEN}${BOX_V}${RESET}  ${line}`);
-  }
-
-  lines.push(`${GREEN}${BOX_V}${RESET}`);
-  lines.push(`${GREEN}${BOX_V}${RESET}  ${GREEN}*${RESET} ${timeStr}`);
-  lines.push(`${GREEN}${bottom}${BOX_H.repeat(75)}${right}${RESET}`);
-
-  return lines.join("\n");
 }
 
 export async function runCommand(options: RunOptions): Promise<void> {
