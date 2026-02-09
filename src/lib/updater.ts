@@ -49,14 +49,14 @@ function compareVersions(v1: string, v2: string): number {
   return 0;
 }
 
-export async function checkForUpdates(): Promise<{ hasUpdate: boolean; latestVersion?: string }> {
+export async function checkForUpdates(force: boolean = false): Promise<{ hasUpdate: boolean; latestVersion?: string }> {
   if (process.env.NO_UPDATE_CHECK === "1") {
     return { hasUpdate: false };
   }
 
-  // Throttle to once per day
+  // Throttle to once per day (unless forced)
   const cache = getCache();
-  if (cache) {
+  if (!force && cache) {
     const ONE_DAY = 24 * 60 * 60 * 1000;
     if (Date.now() - cache.lastCheck < ONE_DAY) {
       // Use cached result

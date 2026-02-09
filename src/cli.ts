@@ -67,7 +67,7 @@ const showUpdateNotice = async () => {
     const result = await checkForUpdates();
     if (result.hasUpdate) {
       console.log(`\x1b[93mUpdate available: ${VERSION} \u2192 ${result.latestVersion}\x1b[0m`);
-      console.log(`   Run: \x1b[96mcurl -sL https://neonalpha.me/install | bash\x1b[0m\n`);
+      console.log(`   Run: \x1b[96malpha-term update\x1b[0m\n`);
     }
   } catch {
     // Silent fail
@@ -77,12 +77,13 @@ const showUpdateNotice = async () => {
 // Show welcome for new users when running without args
 if (process.argv.length <= 2 && !isLoggedIn()) {
   showWelcome();
+  await showUpdateNotice();
   process.exit(0);
 }
 
 // Show login prompt for any command if not logged in
 const command = process.argv[2] || "";
-const noAuthCommands = ["--version", "-V", "--help", "-h", "login", "logout"];
+const noAuthCommands = ["--version", "-V", "--help", "-h", "login", "logout", "update"];
 if (!isLoggedIn() && !noAuthCommands.includes(command)) {
   showLoginPrompt();
   process.exit(0);
@@ -94,6 +95,7 @@ import { logoutCommand } from "./commands/logout.js";
 import { listCommand } from "./commands/list.js";
 import { runCommand } from "./commands/run.js";
 import { configCommand } from "./commands/config.js";
+import { updateCommand } from "./commands/update.js";
 
 const program = new Command();
 
@@ -162,26 +164,33 @@ program
     await configCommand(options);
   });
 
+// Update
+program
+  .command("update")
+  .description("Check for updates and install the latest version")
+  .action(async () => {
+    await updateCommand();
+  });
+
 // Handle no command — show banner, commands, and update check
 if (process.argv.length <= 2) {
-  (async () => {
-    console.log();
-    console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
-    console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
-    console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
-    console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
-    console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
-    console.log();
-    console.log(`  \x1b[92malpha-term watch\x1b[0m           Live monitoring`);
-    console.log(`  \x1b[92malpha-term run\x1b[0m             View recent alerts`);
-    console.log(`  \x1b[92malpha-term login\x1b[0m           Login with email/password`);
-    console.log(`  \x1b[92malpha-term logout\x1b[0m          Log out`);
-    console.log(`  \x1b[92malpha-term config\x1b[0m          Configure settings`);
-    console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
-    console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
-    console.log();
-    await showUpdateNotice();
-  })();
+  console.log();
+  console.log(`\x1b[96m╔═╗\x1b[0m  \x1b[96m╦\x1b[0m    \x1b[96m╔═╗\x1b[0m  \x1b[96m╦ ╦\x1b[0m  \x1b[96m╔═╗\x1b[0m    \x1b[93m═╦═\x1b[0m  \x1b[93m╔═╗\x1b[0m  \x1b[93m╦═╗\x1b[0m  \x1b[93m╔╦╗\x1b[0m`);
+  console.log(`\x1b[96m╠═╣\x1b[0m  \x1b[96m║\x1b[0m    \x1b[96m╠═╝\x1b[0m  \x1b[96m╠═╣\x1b[0m  \x1b[96m╠═╣\x1b[0m     \x1b[93m║\x1b[0m   \x1b[93m╠═\x1b[0m   \x1b[93m╠╦╝\x1b[0m  \x1b[93m║║║\x1b[0m`);
+  console.log(`\x1b[96m╩ ╩\x1b[0m  \x1b[96m╩═╝\x1b[0m  \x1b[96m╩\x1b[0m    \x1b[96m╩ ╩\x1b[0m  \x1b[96m╩ ╩\x1b[0m     \x1b[93m╩\x1b[0m   \x1b[93m╚═╝\x1b[0m  \x1b[93m╩╚═\x1b[0m  \x1b[93m╩ ╩\x1b[0m`);
+  console.log(`\x1b[92m══════════════════════════════════════════════════\x1b[0m`);
+  console.log(`\x1b[95m       <<< NEON ALPHA TERMINAL ALERTS >>>\x1b[0m`);
+  console.log();
+  console.log(`  \x1b[92malpha-term watch\x1b[0m           Live monitoring`);
+  console.log(`  \x1b[92malpha-term run\x1b[0m             View recent alerts`);
+  console.log(`  \x1b[92malpha-term login\x1b[0m           Login with email/password`);
+  console.log(`  \x1b[92malpha-term logout\x1b[0m          Log out`);
+  console.log(`  \x1b[92malpha-term config\x1b[0m          Configure settings`);
+  console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
+  console.log(`  \x1b[92malpha-term update\x1b[0m          Check for updates`);
+  console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
+  console.log();
+  await showUpdateNotice();
 } else {
   program.parse();
 }

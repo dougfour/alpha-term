@@ -55,8 +55,8 @@ install_binary() {
     # Create install directory if it doesn't exist
     mkdir -p "${INSTALL_DIR}"
     
-    # Download binary
-    if curl -sL "${binary_url}" -o "${install_path}"; then
+    # Download binary (-f = fail on HTTP errors, --connect-timeout/--max-time prevent hanging)
+    if curl -fL --progress-bar --connect-timeout 15 --max-time 120 "${binary_url}" -o "${install_path}"; then
         chmod +x "${install_path}"
         echo -e "${GREEN}✓ Installed to ${install_path}${NC}"
         
