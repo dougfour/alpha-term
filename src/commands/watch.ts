@@ -10,7 +10,7 @@ interface WatchOptions {
   sound?: boolean;
   save?: string;
   keyword?: string;
-  handle?: string;
+  account?: string;
   json?: boolean;
   test?: boolean;
 }
@@ -90,8 +90,8 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
 
       // Filter by handle/keyword if specified via CLI options
       let filtered = alerts;
-      if (options.handle) {
-        const handle = options.handle.replace(/^@/, "").toLowerCase();
+      if (options.account) {
+        const handle = options.account.replace(/^@/, "").toLowerCase();
         filtered = filtered.filter(
           (a) => a.author_handle.toLowerCase() === handle
         );

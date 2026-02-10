@@ -7,7 +7,7 @@ import {
 
 interface RunOptions {
   keyword?: string;
-  handle?: string;
+  account?: string;
   json?: boolean;
   limit?: number;
 }
@@ -33,8 +33,8 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
     // Filter by handle/keyword if specified
     let filtered = alerts;
-    if (options.handle) {
-      const handle = options.handle.replace(/^@/, "").toLowerCase();
+    if (options.account) {
+      const handle = options.account.replace(/^@/, "").toLowerCase();
       filtered = filtered.filter(
         (a) => a.author_handle.toLowerCase() === handle
       );

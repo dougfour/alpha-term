@@ -111,7 +111,7 @@ program
   .option("-s, --sound", "Play sound on new tweets")
   .option("--save <file>", "Save tweets to file")
   .option("-k, --keyword <text>", "Filter by keyword")
-  .option("-h, --handle <user>", "Filter by Twitter handle")
+  .option("-a, --account <handle>", "Filter by account handle")
   .option("-j, --json", "Output as JSON")
   .option("-t, --test", "Run in test mode with simulated tweet")
   .action(async (options) => {
@@ -138,7 +138,7 @@ program
   .command("run")
   .description("View recent alerts")
   .option("-k, --keyword <text>", "Filter by keyword")
-  .option("-h, --handle <user>", "Filter by Twitter handle")
+  .option("-a, --account <handle>", "Filter by account handle")
   .option("-j, --json", "Output as JSON")
   .option("-l, --limit <number>", "Number of alerts to show", "20")
   .action(async (options) => {
@@ -187,6 +187,15 @@ if (process.argv.length <= 2) {
   console.log(`  \x1b[92malpha-term list\x1b[0m            Manage watch list`);
   console.log(`  \x1b[92malpha-term update\x1b[0m          Check for updates`);
   console.log(`  \x1b[92malpha-term --version\x1b[0m       Show version`);
+  console.log();
+  console.log(`\x1b[93mFILTERING:\x1b[0m`);
+  console.log(`  \x1b[92m-a, --account <handle>\x1b[0m    Filter alerts by account handle`);
+  console.log(`  \x1b[92m-k, --keyword <text>\x1b[0m      Filter alerts by keyword`)
+  console.log();
+  console.log(`  Examples:`);
+  console.log(`    \x1b[92malpha-term watch -a elonmusk\x1b[0m`);
+  console.log(`    \x1b[92malpha-term run -k bitcoin\x1b[0m`);
+  console.log(`    \x1b[92malpha-term run -a elonmusk -k "bull run"\x1b[0m`);
   console.log();
   await showUpdateNotice();
 } else {
