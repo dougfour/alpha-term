@@ -9,6 +9,7 @@ export async function configCommand(key?: string, value?: string, options?: { re
     api.updateConfig({
       soundEnabled: false,
       saveToFile: undefined,
+      csvFile: undefined,
       defaultLimit: undefined,
     });
     console.log(`${GREEN}Configuration reset to defaults.${RESET}\n`);
@@ -20,11 +21,13 @@ export async function configCommand(key?: string, value?: string, options?: { re
     const config = api.getConfig();
     console.log(`  Sound alerts:   ${config.soundEnabled ? GREEN + "on" + RESET : DIM + "off" + RESET}`);
     console.log(`  Auto-save:      ${config.saveToFile ? GREEN + config.saveToFile + RESET : DIM + "off" + RESET}`);
+    console.log(`  CSV export:     ${config.csvFile ? GREEN + config.csvFile + RESET : DIM + "off" + RESET}`);
     console.log(`  Alert limit:    ${config.defaultLimit ? GREEN + config.defaultLimit + RESET : DIM + "20 (default)" + RESET}`);
     console.log();
     console.log(`  ${DIM}Examples:${RESET}`);
     console.log(`    ${GREEN}alpha-term config sound on${RESET}`);
     console.log(`    ${GREEN}alpha-term config save tweets.txt${RESET}`);
+    console.log(`    ${GREEN}alpha-term config csv alerts.csv${RESET}`);
     console.log(`    ${GREEN}alpha-term config limit 50${RESET}`);
     console.log(`    ${GREEN}alpha-term config reset${RESET}`);
     console.log();
@@ -58,6 +61,21 @@ export async function configCommand(key?: string, value?: string, options?: { re
       return;
     }
 
+    case "csv": {
+      if (!value) {
+        console.log(`${RED}Usage: alpha-term config csv <file>|off${RESET}\n`);
+        return;
+      }
+      if (value === "off") {
+        api.updateConfig({ csvFile: undefined });
+        console.log(`${GREEN}CSV export: off${RESET}\n`);
+      } else {
+        api.updateConfig({ csvFile: value });
+        console.log(`${GREEN}CSV export: ${value}${RESET}\n`);
+      }
+      return;
+    }
+
     case "limit": {
       if (!value) {
         console.log(`${RED}Usage: alpha-term config limit <number>|off${RESET}\n`);
@@ -83,6 +101,7 @@ export async function configCommand(key?: string, value?: string, options?: { re
       console.log(`  Available settings:`);
       console.log(`    ${GREEN}sound${RESET} on|off        Enable/disable sound alerts`);
       console.log(`    ${GREEN}save${RESET}  <file>|off    Auto-save tweets to file`);
+      console.log(`    ${GREEN}csv${RESET}   <file>|off    Auto-save alerts to CSV`);
       console.log(`    ${GREEN}limit${RESET} <number>|off  Default alert count for 'run'`);
       console.log(`    ${GREEN}reset${RESET}               Reset all to defaults`);
       console.log();

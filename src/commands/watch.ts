@@ -1,10 +1,11 @@
-import { Alert, api } from "../lib/api.js";
+import { Alert, Monitor, api } from "../lib/api.js";
 import {
   GREEN, CYAN, YELLOW, RED, RESET, DIM, CLEAR_LINE,
   BOX_H,
   renderAlert, printBanner,
 } from "../lib/render.js";
 import * as fs from "fs";
+import * as path from "path";
 
 interface WatchOptions {
   sound?: boolean;
@@ -45,6 +46,62 @@ function localTimeNow(): string {
   return `${h}:${m}:${s}`;
 }
 
+const CSV_COLUMNS = [
+  "timestamp", "platform", "source", "priority", "handle", "name",
+  "followers", "likes", "retweets", "text", "url",
+];
+
+function escapeCsvField(field: string): string {
+  if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+    return `"${field.replace(/"/g, '""')}"`;
+  }
+  return field;
+}
+
+function buildPostUrl(alert: Alert): string {
+  const platform = alert.platform || "twitter";
+  if (platform === "twitter") {
+    return `https://x.com/${alert.author_handle}/status/${alert.tweet_id}`;
+  } else if (platform === "bluesky") {
+    const parts = alert.tweet_id.split("/");
+    const rkey = parts[parts.length - 1] || alert.tweet_id;
+    return `https://bsky.app/profile/${alert.author_handle}/post/${rkey}`;
+  } else if (platform === "nostr") {
+    return `https://njump.me/${alert.tweet_id}`;
+  }
+  return "";
+}
+
+function writeCsvRow(filePath: string, alert: Alert, monitor?: Monitor): void {
+  const fileExists = fs.existsSync(filePath) && fs.statSync(filePath).size > 0;
+
+  if (!fileExists) {
+    fs.writeFileSync(filePath, CSV_COLUMNS.join(",") + "\n");
+  }
+
+  const source = monitor
+    ? (monitor.monitor_type === "search"
+      ? `Search: ${monitor.target}`
+      : `Account: @${alert.author_handle}`)
+    : `Account: @${alert.author_handle}`;
+
+  const row = [
+    alert.created_at,
+    alert.platform || "twitter",
+    source,
+    monitor?.priority || "",
+    alert.author_handle,
+    alert.author_name || "",
+    "",  // followers
+    "",  // likes
+    "",  // retweets
+    (alert.tweet_text || "").replace(/\n/g, " "),
+    buildPostUrl(alert),
+  ];
+
+  fs.appendFileSync(filePath, row.map(escapeCsvField).join(",") + "\n");
+}
+
 export async function watchCommand(options: WatchOptions): Promise<void> {
 
   // Demo mode if --test flag is passed
@@ -71,6 +128,21 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
   const config = api.getConfig();
   const useSound = options.sound || config.soundEnabled;
   const saveFile = options.save || config.saveToFile;
+  const csvFile = config.csvFile;
+
+  // Fetch monitors for CSV metadata (keyword/account/priority lookup)
+  let monitorMap = new Map<string, Monitor>();
+  if (csvFile) {
+    try {
+      const monitors = await api.getMonitors();
+      for (const m of monitors) {
+        monitorMap.set(String(m.id), m);
+      }
+      console.log(`${GREEN}CSV export: ${csvFile}${RESET} (${monitors.length} monitors loaded)\n`);
+    } catch {
+      console.log(`${YELLOW}CSV export: ${csvFile} (could not load monitors)${RESET}\n`);
+    }
+  }
 
   // Display banner
   printBanner();
@@ -129,6 +201,16 @@ export async function watchCommand(options: WatchOptions): Promise<void> {
             fs.appendFileSync(saveFile, line);
           }
 
+          // Save to CSV if configured
+          if (csvFile) {
+            try {
+              const monitor = monitorMap.get(String(alert.monitor_id));
+              writeCsvRow(csvFile, alert, monitor);
+            } catch (err: any) {
+              // Silent fail — don't interrupt watch for CSV errors
+            }
+          }
+
           if (options.json) {
             console.log(JSON.stringify(alert, null, 2));
           } else {
@@ -182,6 +264,7 @@ async function runWatchDemo(options: WatchOptions): Promise<void> {
   const demoAlert: Alert = {
     id: "demo-1",
     monitor_id: "demo",
+    platform: "twitter",
     tweet_id: "demo",
     tweet_text: "$BTC showing strong momentum. Accumulation phase continuing. Watch for breakout above $76K. The bull run is just getting started. #bitcoin #crypto",
     author_handle: "elonmusk",

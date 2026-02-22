@@ -15,18 +15,31 @@ interface TokenData {
 export interface Config {
   soundEnabled: boolean;
   saveToFile?: string;
+  csvFile?: string;
   defaultLimit?: number;
 }
 
 export interface Alert {
   id: string;
   monitor_id: string;
+  platform: string;
   tweet_id: string;
   tweet_text: string;
   author_handle: string;
   author_name: string;
   author_avatar: string;
   created_at: string;
+}
+
+export interface Monitor {
+  id: number;
+  platform: string;
+  monitor_type: string;
+  target: string;
+  priority: string;
+  keywords: string[] | null;
+  is_active: boolean;
+  is_muted: boolean;
 }
 
 export interface SubscriptionStatus {
@@ -214,6 +227,11 @@ class NeonAlphaClient {
 
   async getAlerts(limit: number = 20): Promise<Alert[]> {
     const response = await this.client.get("/alerts", { params: { limit } });
+    return response.data;
+  }
+
+  async getMonitors(): Promise<Monitor[]> {
+    const response = await this.client.get("/monitors");
     return response.data;
   }
 
